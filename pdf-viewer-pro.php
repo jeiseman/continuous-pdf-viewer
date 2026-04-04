@@ -5,7 +5,7 @@
  * Description: A high-performance PDF viewer based on PDF.js with a shortcode generator and Gutenberg support.
  * Version:     2.0.0
  * Author:      Jonathan A Eiseman
- * License:     GPL2
+ * License:     Apache 2.0
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
