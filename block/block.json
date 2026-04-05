@@ -1,10 +1,11 @@
 {
   "$schema": "https://schemas.wp.org/trunk/block.json",
-  "apiVersion": 2,
+  "apiVersion": 3,
   "name": "cpv/pdf-viewer",
-  "title": "PDF Viewer Pro",
+  "title": "Continuous PDF Viewer",
   "category": "media",
   "icon": "media-document",
+  "description": "Embed a continuous scroll PDF viewer.",
   "editorScript": "cpv-block-editor-script",
   "attributes": {
     "url": { "type": "string", "default": "" },
