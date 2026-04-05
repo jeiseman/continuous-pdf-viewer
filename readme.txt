@@ -1,56 +1,33 @@
-# PDF Viewer Pro
+# Continuous PDF Viewer
 
-A lightweight, robust WordPress plugin that renders interactive PDF documents directly on your pages using the native Gutenberg Block Editor. Built with vanilla JavaScript and the PDF.js engine for maximum performance without the overhead of complex build tools.
+**Version:** 2.1.0
+**Author:** Jonathan A Eiseman
+**License:** GPL2
 
-## Features
+*Thanks to Imran Siddiq (https://www.youtube.com/@websquadron/). This code was adapted from his PDF Viewer code.*
 
-* **Gutenberg Integration:** Custom `[cpv/pdf-viewer]` block for seamless embedding directly from the WordPress editor.
-* **Shortcode Generator:** Dedicated admin tools page to generate customizable `[pdf_viewer]` shortcodes for classic editing.
-* **Interactive Annotation Layer:** Fully supports hyperlinks mapped from the original MS Word documents.
-* **Dual Themes:** Easily toggle between Light and Dark display modes.
-* **Custom Overlays:** Support for cover images and customizable loading/error states.
-* **Responsive Design:** Fluid canvas scaling, fullscreen mode, and mobile-friendly zoom controls.
-* **Optimized Loading:** Scripts and styles are logically separated and enqueued only when needed, pulling the core engine directly from a CDN.
+A high-performance, WordPress-native PDF viewer powered by PDF.js. Version 2.1 introduces a completely rebuilt rendering engine optimized for 100% continuous scrolling, bringing a modern, native-app reading experience to your WordPress site.
 
-## Requirements
+## Key Features
 
-* WordPress 5.8+ (for Gutenberg Block support)
-* PHP 7.4+
-
-## Installation
-
-1. Download the `pdf-viewer-pro` folder.
-2. Upload the folder to the `/wp-content/plugins/` directory on your server.
-3. Navigate to the **Plugins** menu in your WordPress dashboard.
-4. Locate **PDF Viewer Pro** and click **Activate**.
+* **Continuous Scroll Engine:** Pages stack seamlessly for smooth, vertical reading. Highly optimized sequential rendering prevents browser lag, even on large documents.
+* **Smart Page Tracking:** An intelligent viewport observer automatically detects which page you are reading and instantly updates the toolbar and sidebar thumbnails as you scroll.
+* **Advanced Search & Highlight:** Pinpoint search functionality that calculates the exact pixel location of your search terms and smoothly scrolls them directly into the center of your screen.
+* **Native Fullscreen Mode:** Utilizes the browser's native Fullscreen API for distraction-free reading, featuring "scroll memory" to keep your place when entering or exiting fullscreen.
+* **Gutenberg Block Integration:** A native WordPress block with a click-to-select placeholder UI and seamless Media Library integration.
+* **Live Shortcode Generator:** A dedicated admin tools page (`Tools > Continuous PDF Viewer `) that lets you visually configure colors, dimensions, and toolbar features while generating a live shortcode.
 
 ## Usage
 
 ### Using the Gutenberg Block
-
-1. Open any page or post in the Block Editor.
-2. Click the `+` icon to add a new block and search for **PDF Viewer Pro** (located under the Media category).
-3. Use the sidebar to upload or select a PDF from your Media Library.
-4. Customize the theme, starting page, and zoom levels in the block settings.
+1. Open the WordPress Block Editor.
+2. Search for the **Continous PDF Viewer** block.
+3. Click **Select PDF File** on the canvas to choose a document from your Media Library.
+4. Use the right-hand Inspector Controls to customize the start page, default zoom, sidebar visibility, and colors.
 
 ### Using the Shortcode
+You can place the viewer anywhere using the `[pdf_viewer]` shortcode.
 
-1. Navigate to **Tools > PDF Viewer Pro Generator** in the WordPress admin menu.
-2. Configure your desired settings (URL, Light/Dark mode, zoom steps).
-3. Click **Generate Shortcode**.
-4. Copy the resulting `[pdf_viewer ...]` string and paste it into any post, page, or text widget.
-
-## File Structure
-
-* `pdf-viewer-pro.php`: Core plugin file handling WordPress hooks, block registration, and shortcode processing.
-* `block/`: Contains `block.json` and `index.js` for Gutenberg editor integration.
-* `pdf-viewer-core.js` & `pdf-viewer-core.css`: Frontend engine for rendering the PDF.js canvas and interactive layers.
-* `pdf-viewer-admin.js` & `pdf-viewer-admin.css`: Backend UI and logic for the shortcode generator.
-
-## Dependencies
-
-This plugin utilizes [PDF.js](https://mozilla.github.io/pdf.js/) (v3.11.174) served via Cloudflare CDN for document rendering.
-
-## License
-
-GPLv2
+**Basic Example:**
+```text
+[pdf_viewer url="[https://yoursite.com/wp-content/uploads/document.pdf](https://yoursite.com/wp-content/uploads/document.pdf)"]
