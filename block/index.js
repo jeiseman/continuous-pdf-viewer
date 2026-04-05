@@ -7,6 +7,7 @@
     var SelectControl = wp.components.SelectControl;
     var CheckboxControl = wp.components.CheckboxControl;
     var MediaUpload = wp.blockEditor.MediaUpload;
+    var useBlockProps = wp.blockEditor.useBlockProps;
     var Button = wp.components.Button;
 
     registerBlockType( 'cpv/pdf-viewer', {
@@ -15,7 +16,7 @@
             var atts = props.attributes;
 
             // --- SMART WRAPPERS (Defensive Programming for Defaults) ---
-            
+
             // 1. Smart Text Input: Enforces default if value is undefined
             var SmartText = function( label, attrName, fallback ) {
                 var currentVal = atts[attrName] !== undefined ? atts[attrName] : fallback;
@@ -78,7 +79,7 @@
             return [
                 // --- 1. THE SIDEBAR CONTROLS (InspectorControls) ---
                 el( InspectorControls, { key: 'inspector' },
-                    
+
                     el( PanelBody, { title: 'General Configuration', initialOpen: true },
                         SmartText('PDF File URL', 'url', ''),
                         SmartText('Start Page', 'startPage', '1'),
@@ -125,7 +126,7 @@
                         SmartYesNo('Show Cover Button', 'coverButton', 'yes'),
                         SmartText('Cover Height', 'coverHeight', '720px'),
                         SmartText('Cover Hint Text', 'coverHint', 'Click to open the document viewer'),
-                        
+
                         SmartText('Overlay Text', 'coverOverlayText', 'Click to Open'),
                         SmartText('Overlay BG Color', 'coverOverlayBg', 'rgba(0,0,0,0.45)'),
                         SmartText('Overlay Text Color', 'coverOverlayColor', '#ffffff'),
@@ -133,7 +134,7 @@
                         SmartText('Overlay Radius', 'coverOverlayRadius', '0px'),
                         SmartText('Overlay Font Size', 'coverOverlayFontSize', '18px'),
                         SmartText('Overlay Font Weight', 'coverOverlayFontWeight', '700'),
-                        
+
                         SmartText('Button Text', 'coverButtonText', 'Open PDF'),
                         SmartSelect('Button Align', 'coverButtonAlign', [{label: 'Left', value: 'left'}, {label: 'Center', value: 'center'}, {label: 'Right', value: 'right'}], 'left'),
                         SmartText('Button Padding', 'coverButtonPadding', '12px 18px'),
@@ -160,16 +161,16 @@
                 ),
 
                 // --- 2. THE EDITOR PREVIEW BLOCK ---
-                el( 'div', { 
-                    key: 'preview', 
+                el( 'div', useBlockProps({
+                    key: 'preview',
                     className: props.className,
-                    style: { 
-                        padding: '40px 20px', background: atts.bgColor || '#f4f5f7', 
+                    style: {
+                        padding: '40px 20px', background: atts.bgColor || '#f4f5f7',
                         border: '1px dashed #ccc', borderRadius: '8px', textAlign: 'center', fontFamily: 'sans-serif'
-                    } 
-                },
-                    el('h4', { style: { margin: '0 0 15px 0', color: atts.textColor || '#333' } }, 'PDF Viewer Pro'),
-                    
+                    }
+                }),
+                    el('h4', { style: { margin: '0 0 15px 0', color: atts.textColor || '#333' } }, 'Continuous PDF Viewer'),
+
                     el( MediaUpload, {
                         onSelect: onSelectPDF, allowedTypes: ['application/pdf'], value: atts.url,
                         render: function( obj ) {
@@ -180,7 +181,7 @@
                         }
                     } ),
 
-                    el('p', { style: { marginTop: '15px', fontSize: '13px', color: '#666', wordBreak: 'break-all' } }, 
+                    el('p', { style: { marginTop: '15px', fontSize: '13px', color: '#666', wordBreak: 'break-all' } },
                         atts.url ? 'Current File: ' + atts.url.split('/').pop() : 'No PDF selected.'
                     )
                 )
