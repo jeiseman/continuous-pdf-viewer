@@ -88,9 +88,9 @@
                     ),
 
                     el( PanelBody, { title: 'Dimensions & Layout', initialOpen: false },
-                        SmartText('Desktop Height', 'height', '720px'),
-                        SmartText('Tablet Height', 'tabletHeight', '600px'),
-                        SmartText('Mobile Height', 'mobileHeight', '480px'),
+                        SmartText('Desktop Height', 'height', '80vh'),
+                        SmartText('Tablet Height', 'tabletHeight', '70vh'),
+                        SmartText('Mobile Height', 'mobileHeight', '60vh'),
                         SmartText('Width', 'width', '100%'),
                         SmartText('Max Width', 'maxWidth', '100%'),
                         SmartText('Border Radius', 'borderRadius', '12'),
@@ -124,7 +124,7 @@
                         SmartYesNo('Enable Cover Mode', 'coverMode', 'no'),
                         SmartYesNo('Show Cover Overlay', 'coverOverlay', 'no'),
                         SmartYesNo('Show Cover Button', 'coverButton', 'yes'),
-                        SmartText('Cover Height', 'coverHeight', '720px'),
+                        SmartText('Cover Height', 'coverHeight', '80vh'),
                         SmartText('Cover Hint Text', 'coverHint', 'Click to open the document viewer'),
 
                         SmartText('Overlay Text', 'coverOverlayText', 'Click to Open'),
