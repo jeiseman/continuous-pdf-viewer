@@ -3,7 +3,7 @@ Contributors: Jonathan A Eiseman
 Tags: pdf, pdf viewer, document viewer, pdf.js, gutenberg
 Requires at least: 5.8
 Tested up to: 6.9
-Stable tag: 2.1.0
+Stable tag: 2.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -52,3 +52,8 @@ Note: Generating complex shortcodes is highly recommended via the built-in Short
 * Fix: Replaced legacy CSS flexbox centering to eliminate the "cut-off top" bug on tall pages.
 * Tweak: Search navigation buttons now visually disable when reaching the first or last search result.
 * Deprecated: The legacy view_mode setting (Single Page vs. Continuous) has been removed.
+
+= 2.1.1 =
+* Changed the default height from 600px to 80vh
+* Recalculate the width for each tab when in a page when different pdf viewer blocks are in different tabs.`
+* Set the default heights to 80vh for desktop, 70vh for tablet, and 60vh for mobile rather than a specific px value.
