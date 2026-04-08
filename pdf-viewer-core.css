@@ -21,7 +21,8 @@
     overflow: hidden;
     border: 1px solid var(--pv-border);
     border-radius: 8px;
-    height: 600px; /* Default height */
+    height: 80vh; /* Default height */
+    min-height: 400px;
 }
 
 /* Dark Theme */
