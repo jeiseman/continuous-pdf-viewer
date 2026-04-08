@@ -552,6 +552,31 @@
             }
 
             // --- INITIALIZE ---
+            //
+            // THE TAB FIX: Watch for visibility changes to fix the 30% zoom bug
+            if (window.ResizeObserver) {
+                const tabObserver = new ResizeObserver(function(entries) {
+                    for (const entry of entries) {
+                        // If the width is now > 0, the GenerateBlocks Tab has been opened
+                        if (entry.contentRect.width > 0) {
+                            // 100ms delay ensures the tab opening transition is fully complete
+                            setTimeout(function() {
+                                if (typeof fitWidth === 'function') {
+                                    fitWidth(root);
+                                }
+                            }, 100);
+                            
+                            // Stop watching this specific viewer to save performance
+                            tabObserver.unobserve(root);
+                        }
+                    }
+                });
+                
+                // Start monitoring the specific .pv-root element
+                tabObserver.observe(root);
+            }
+
+            // Kick off the initial load
             loadPDF();
         });
     }
