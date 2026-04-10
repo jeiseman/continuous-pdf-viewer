@@ -34,7 +34,7 @@ function cpv_render_shortcode( $atts ) {
         'error_text'         => 'Unable to load PDF. Please try again.',
         'theme'              => 'light',
         'start_page'         => 1,
-        'default_zoom'       => 'auto',
+        'default_zoom'       => 'page-width',
         'min_zoom'           => 0.1,
         'max_zoom'           => 10,
         'zoom_step'          => 0.1,
