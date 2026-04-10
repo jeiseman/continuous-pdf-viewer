@@ -41,7 +41,7 @@ Basic Example:
 Advanced Example:
 `[pdf_viewer url="/wp-content/uploads/document.pdf" title="Annual Report" start_page="3" theme="dark" accent="#4f7df3"]`
 
-Note: Generating complex shortcodes is highly recommended via the built-in Shortcode Generator under the Tools menu.
+Note: Generating complex shortcodes is highly recommended via the built-in Shortcode Geneator under the Tools menu.
 
 == Changelog ==
 
@@ -57,3 +57,4 @@ Note: Generating complex shortcodes is highly recommended via the built-in Short
 * Changed the default height from 600px to 80vh
 * Recalculate the width for each tab when in a page when different pdf viewer blocks are in different tabs.`
 * Set the default heights to 80vh for desktop, 70vh for tablet, and 60vh for mobile rather than a specific px value.
+* Change the default_zoom to "page-width" instead of "auto"
