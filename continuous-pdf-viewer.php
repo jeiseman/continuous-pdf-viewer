@@ -3,7 +3,7 @@
  * Plugin Name: Continuous PDF Viewer
  * Plugin URI:  https://mafw.org
  * Description: A high-performance PDF viewer based on PDF.js with a shortcode generator and Gutenberg support.
- * Version:     2.1.1
+ * Version:     2.1.3
  * Author:      Jonathan A Eiseman
  * License:     GPL2
  */
@@ -34,7 +34,7 @@ function cpv_render_shortcode( $atts ) {
         'error_text'         => 'Unable to load PDF. Please try again.',
         'theme'              => 'light',
         'start_page'         => 1,
-        'default_zoom'       => 'page-width',
+        'default_zoom'       => 'auto',
         'min_zoom'           => 0.1,
         'max_zoom'           => 10,
         'zoom_step'          => 0.1,
@@ -56,7 +56,7 @@ function cpv_render_shortcode( $atts ) {
     extract( $a );
 
     $uid = 'pv-' . wp_generate_password( 8, false );
-    
+
     // Visibility classes: if a feature is false, we add a 'pv-hidden' class
     $v_thumbnails      = $f_thumbnails ? '' : ' pv-hidden';
     $v_page_nav        = $f_page_nav ? '' : ' pv-hidden';
@@ -74,10 +74,10 @@ function cpv_render_shortcode( $atts ) {
     ob_start();
     ?>
     <style>
-        #<?php echo esc_html( $uid ); ?> { 
-            --pv-height: <?php echo esc_attr( $height ); ?>; 
-            --pv-tablet-height: <?php echo esc_attr( $tablet_height ); ?>; 
-            --pv-mobile-height: <?php echo esc_attr( $mobile_height ); ?>; 
+        #<?php echo esc_html( $uid ); ?> {
+            --pv-height: <?php echo esc_attr( $height ); ?>;
+            --pv-tablet-height: <?php echo esc_attr( $tablet_height ); ?>;
+            --pv-mobile-height: <?php echo esc_attr( $mobile_height ); ?>;
         }
     </style>
 
@@ -215,6 +215,12 @@ function cpv_render_shortcode( $atts ) {
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><polyline points="21 3 14 10"/><polyline points="3 21 10 14"/></svg>
                 </button>
             <?php endif; ?>
+            <div class="pv-viewer-tip">
+                <span class="pv-tip-icon">💡</span>
+                <span class="pv-tip-text">
+                    Pro-Tip: Click <a href="#" class="pv-tip-link">Full Screen</a> for the best viewing experience.
+                </span>
+            </div>
         </div>
 
         <?php if ( $f_search ) : ?>
@@ -291,9 +297,20 @@ function cpv_register_block() {
  */
 add_action( 'wp_enqueue_scripts', 'cpv_frontend_assets' );
 function cpv_frontend_assets() {
-    wp_enqueue_style( 'cpv-core-css', plugins_url( 'pdf-viewer-core.css', __FILE__ ), array(), '2.1.1' );
+    wp_enqueue_style(
+        'cpv-core-css',
+        plugins_url( 'pdf-viewer-core.css', __FILE__ ),
+        array(),
+        filemtime( plugin_dir_path( __FILE__ ) . 'pdf-viewer-core.css' )
+    );
     wp_register_script( 'pdfjs-lib', plugins_url( 'lib/pdfjs/pdf.min.js', __FILE__ ), array(), '3.11.174', true );
-    wp_enqueue_script( 'cpv-core-js', plugins_url( 'pdf-viewer-core.js', __FILE__ ), array( 'pdfjs-lib' ), '2.1.1', true );
+    wp_enqueue_script(
+        'cpv-core-js',
+        plugins_url( 'pdf-viewer-core.js', __FILE__ ),
+        array( 'pdfjs-lib' ),
+        filemtime( plugin_dir_path( __FILE__ ) . 'pdf-viewer-core.js' ),
+        true
+    );
     wp_localize_script( 'cpv-core-js', 'cpvSettings', array(
         'workerUrl' => plugins_url( 'lib/pdfjs/pdf.worker.min.js', __FILE__ )
     ));
