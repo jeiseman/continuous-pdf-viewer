@@ -36,14 +36,19 @@
 }
 
 /* --- FULLSCREEN FIX --- */
-.pv-root.fullscreen {
-    position: fixed !important;
+div.pv-root.fullscreen {
+    position: fixed;
     inset: 0;
-    width: 100vw !important;
-    height: 100vh !important;
+    width: 100vw;
+    height: 100vh;
     z-index: 999999;
     border-radius: 0;
     border: none;
+    display: flex;
+    flex-direction: column;
+    background: #e5e5e5;
+    top: 0;
+    left: 0;
 }
 
 /* 2. Toolbar Layout */
@@ -99,7 +104,7 @@
 
 /* --- SEARCH BAR HORIZONTAL FIX --- */
 .pv-search-bar {
-    display: none; 
+    display: none;
     align-items: center;
     gap: 8px; /* Spaces out input, arrows, and X horizontally */
     background: var(--pv-surface-2);
@@ -133,7 +138,7 @@
     border-right: 1px solid var(--pv-border);
     display: flex;
     flex-direction: column;
-    height: 100%; 
+    height: 100%;
     max-height: 100%;
     min-height: 0;
     position: absolute;
@@ -171,14 +176,14 @@
     background: var(--pv-bg);
 }
 
-[data-el="thumbs"] > div.active { 
-    border-color: var(--pv-accent); 
+[data-el="thumbs"] > div.active {
+    border-color: var(--pv-accent);
 }
 
-[data-el="thumbs"] canvas { 
-    max-width: 100%; 
-    height: auto; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+[data-el="thumbs"] canvas {
+    max-width: 100%;
+    height: auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 .pv-thumb-item {
     cursor: pointer;
@@ -243,83 +248,157 @@
 
 /* --- CONTINUOUS SCROLL BULLETPROOF FIX --- */
 
-/* 1. Prevent the wrapper from using Flexbox centering (Fixes the cut-off top) */
-.pv-continuous-wrap {
-    display: block !important;
-    text-align: center !important;
-    overflow-y: auto !important;
-    padding: 20px 0 !important;
-    align-items: normal !important; 
-    justify-content: normal !important;
+/* 1. Prevent the wrapper from using Flexbox centering */
+div.pv-root .pv-continuous-wrap {
+    display: block;
+    text-align: center;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 20px 0;
+    align-items: normal;
+    justify-content: normal;
 }
 
-/* 2. Force canvases to stack vertically instead of overlapping (Fixes combined pages) */
-.pv-continuous-wrap canvas.pv-cont-page {
-    position: relative !important;
-    display: block !important;
-    margin: 0 auto 20px auto !important; /* Adds a 20px gap between pages */
-    top: auto !important;
-    left: auto !important;
-    transform: none !important; /* Kills old single-page centering */
-    max-width: 95% !important;
+/* 2. Force canvases to stack vertically and maintain aspect ratio */
+div.pv-root .pv-continuous-wrap canvas.pv-cont-page {
+    position: relative;
+    display: block;
+    margin: 0 auto 20px auto;
+    top: auto;
+    left: auto;
+    transform: none;
+    /* !important is used here specifically to override the PDF engine's inline style stretch */
+    max-width: 100% !important;
     height: auto !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 /* --- FULLSCREEN CONTINUOUS FIXES --- */
 
 /* 1. Ensure the root acts as a strict column in fullscreen */
-.pv-root.fullscreen {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    z-index: 999999 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    background: #e5e5e5 !important;
+div.pv-root.fullscreen {
+    display: flex;
+    flex-direction: column;
+    background: #e5e5e5;
 }
 
 /* 2. Force the toolbar and paging controls to stay visible */
-.pv-root.fullscreen .pv-toolbar,
-.pv-root.fullscreen .pv-page-nav {
-    display: flex !important;
+div.pv-root.fullscreen .pv-toolbar,
+div.pv-root.fullscreen .pv-page-nav {
+    display: flex;
 }
 
 /* 3. Ensure the body takes up the rest of the screen without overflowing */
-.pv-root.fullscreen .pv-body {
-    flex-grow: 1 !important;
-    height: auto !important;
-    min-height: 0 !important; /* Critical for flexbox scrolling */
+div.pv-root.fullscreen .pv-body {
+    flex-grow: 1;
+    height: auto;
+    min-height: 0;
 }
 
 /* 4. Force the continuous wrapper to handle the scrolling */
-.pv-root.fullscreen .pv-continuous-wrap {
-    height: 100% !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
+div.pv-root.fullscreen .pv-continuous-wrap {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 /* --- DISABLED BUTTON STATES --- */
-.pv-btn:disabled,
-.pv-btn[disabled] {
-    opacity: 0.3 !important;
-    cursor: not-allowed !important;
-    pointer-events: none !important;
+div.pv-root .pv-btn:disabled,
+div.pv-root .pv-btn[disabled] {
+    opacity: 0.3;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 /* --- SEARCH BAR SIZING FIX --- */
 
 /* Target the wrapper using its exact data attribute */
-[data-el="searchBar"] {
-    gap: 8px !important;
-    display: flex !important; /* Ensures the input and buttons sit side-by-side */
+div.pv-root [data-el="searchBar"] {
+    gap: 8px;
+    display: flex;
 }
 
 /* Target the input field using its exact data attribute */
-[data-el="searchInput"] {
-    width: 240px !important;
-    min-width: 200px !important;
-    padding: 6px 12px !important;
-    font-size: 14px !important; /* Ensures the text is readable */
+div.pv-root [data-el="searchInput"] {
+    width: 240px;
+    min-width: 200px;
+    padding: 6px 12px;
+    font-size: 14px;
+}
+
+/* Mobile Optimization */
+@media (max-width: 650px) {
+    div.pv-root .pv-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        height: auto;
+        padding: 8px 5px;
+        gap: 5px;
+    }
+
+    div.pv-root .pv-toolbar .pv-sep,
+    div.pv-root .pv-toolbar .pv-spacer,
+    div.pv-root .pv-btn[data-action="print"],
+    div.pv-root .pv-btn[data-action="sidebar"],
+    div.pv-root .pv-btn[data-action="download"] {
+        display: none;
+    }
+
+    div.pv-root .pv-toolbar .pv-btn {
+        flex: 0 0 40px;
+        height: 40px;
+        margin: 2px;
+    }
+    div.pv_root .pv-thumbs {
+        display: none;
+    }
+
+    /* This forces the PDF to use the full width in portrait */
+    div.pv_root .pv-main {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+    }
+}
+
+div.pv-viewer-tip {
+    background: var(--pv-surface-2);
+    border-bottom: 1px solid var(--pv-border);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--pv-text);
+}
+
+div.pv-viewer-tip .pv-tip-icon {
+    font-size: 16px;
+}
+
+div.pv-viewer-tip .pv-tip-text strong {
+    color: var(--pv-accent);
+    font-weight: 600;
+}
+
+/* Hide the tip when in Full Screen to save space if you prefer */
+div.pv-root.fullscreen .pv-viewer-tip {
+    display: none;
+}
+.pv-tip-link {
+    color: var(--pv-accent);
+    text-decoration: underline;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.pv-tip-link:hover {
+    color: var(--pv-text);
+}
+
+/* Hide the tip entirely when in fullscreen mode */
+:fullscreen .pv-viewer-tip,
+:-webkit-full-screen .pv-viewer-tip {
+    display: none !important;
+    visibility: hidden !important;
 }
