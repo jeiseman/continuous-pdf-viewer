@@ -3,7 +3,7 @@ Contributors: Jonathan A Eiseman
 Tags: pdf, pdf viewer, document viewer, pdf.js, gutenberg
 Requires at least: 5.8
 Tested up to: 6.9
-Stable tag: 2.1.1
+Stable tag: 2.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -41,7 +41,7 @@ Basic Example:
 Advanced Example:
 `[pdf_viewer url="/wp-content/uploads/document.pdf" title="Annual Report" start_page="3" theme="dark" accent="#4f7df3"]`
 
-Note: Generating complex shortcodes is highly recommended via the built-in Shortcode Geneator under the Tools menu.
+Note: Generating complex shortcodes is highly recommended via the built-in Shortcode Generator under the Tools menu.
 
 == Changelog ==
 
@@ -57,4 +57,11 @@ Note: Generating complex shortcodes is highly recommended via the built-in Short
 * Changed the default height from 600px to 80vh
 * Recalculate the width for each tab when in a page when different pdf viewer blocks are in different tabs.`
 * Set the default heights to 80vh for desktop, 70vh for tablet, and 60vh for mobile rather than a specific px value.
-* Change the default_zoom to "page-width" instead of "auto"
+* wrapped some output in escape_* functions
+
+= 2.1.3 =
+* removed an extra file that didn't belong
+* removed some !important from the CSS and add a tooltip to the PDF viewer panel
+* fixed some issues with going full screen
+* hide the thumbnail button on mobile
+* hide the sidebar when going fullscreen
