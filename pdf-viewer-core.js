@@ -6,7 +6,7 @@
     // 2. The main initialization loop
     function boot() {
         var roots = document.querySelectorAll('.pv-root');
-        
+
         roots.forEach(function(root) {
             // Prevent double-initialization
             if (root.dataset.initialized) return;
@@ -111,11 +111,11 @@
 
             function renderDocument() {
                 canvasWrap.classList.add('pv-continuous-wrap');
-                
+
                 // Clear old canvases
                 var oldCanvases = canvasWrap.querySelectorAll('.pv-cont-page');
                 oldCanvases.forEach(function(c) { c.remove(); });
-                
+
                 if (loader) loader.style.display = 'flex';
 
                 var dpr = window.devicePixelRatio || 1;
@@ -156,11 +156,11 @@
                         return;
                     }
                     var task = renderQueue.shift();
-                    
+
                     S.pdf.getPage(task.pageNum).then(function(page) {
                         var viewport = page.getViewport({ scale: S.scale * dpr });
                         var ctx = task.canvas.getContext('2d');
-                        
+
                         task.canvas.height = viewport.height;
                         task.canvas.width = viewport.width;
                         task.canvas.style.width = (viewport.width / dpr) + 'px';
@@ -191,7 +191,7 @@
                         });
                     });
                 }
-                
+
                 processQueue();
             }
 
@@ -246,32 +246,32 @@
             async function renderThumbs() {
                 if (!thumbsCont || !CFG.hasThumbs) return;
                 thumbsCont.innerHTML = '';
-                
+
                 for (var i = 1; i <= S.total; i++) {
                     var page = await S.pdf.getPage(i);
                     var vp = page.getViewport({ scale: 0.35 });
                     var item = document.createElement('div');
                     item.className = 'pv-thumb-item' + (i === S.page ? ' active' : '');
-                    
+
                     var tc = document.createElement('canvas');
                     tc.width = vp.width;
                     tc.height = vp.height;
                     await page.render({ canvasContext: tc.getContext('2d'), viewport: vp }).promise;
-                    
+
                     var label = document.createElement('span');
                     label.className = 'pv-thumb-label';
                     label.textContent = i;
-                    
+
                     item.appendChild(tc);
                     item.appendChild(label);
-                    
+
                     (function(n) {
                         item.addEventListener('click', function() {
-                            var targetCanvas = canvasWrap.querySelectorAll('.pv-cont-page')[n - 1]; 
+                            var targetCanvas = canvasWrap.querySelectorAll('.pv-cont-page')[n - 1];
                             if (targetCanvas) targetCanvas.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         });
                     })(i);
-                    
+
                     thumbsCont.appendChild(item);
                 }
             }
@@ -288,7 +288,7 @@
                 } else {
                     setZoom(parseFloat(CFG.defaultZoom) || 1.2);
                 }
-                
+
                 renderThumbs();
 
                 // Initial scroll to start page if not page 1
@@ -327,7 +327,7 @@
                             var x = tx[4], y = tx[5];
                             var fs = Math.sqrt(tx[0] * tx[0] + tx[1] * tx[1]);
                             var cw = item.width / item.str.length;
-                            
+
                             S.searchResults.push({
                                 pageNum: i,
                                 rects: [{ x: x + idx * cw, y: vp.height - y - fs * 0.85, w: q.length * cw, h: fs * 1.2 }]
@@ -339,11 +339,11 @@
                 if (S.searchResults.length) {
                     S.searchIdx = 0;
                     renderDocument(); // Redraws to show highlights
-    
+
                     // Immediately scroll to the exact pixel location of the first result
                     var targetCanvas = canvasWrap.querySelectorAll('.pv-cont-page')[S.searchResults[0].pageNum - 1];
                     var firstRect = S.searchResults[0].rects[0];
-    
+
                     if (targetCanvas && firstRect) {
                         // Use a slight timeout to ensure the DOM is ready after the redraw
                         setTimeout(function() {
@@ -359,7 +359,7 @@
 
             function updateSearchInfo() {
                 if (!searchInfo) return;
-    
+
                 // Find the specific navigation buttons inside the search bar
                 var prevBtn = searchBar ? searchBar.querySelector('[data-action="searchPrev"]') : null;
                 var nextBtn = searchBar ? searchBar.querySelector('[data-action="searchNext"]') : null;
@@ -370,10 +370,10 @@
                     if (nextBtn) nextBtn.disabled = true;
                 } else if (S.searchResults.length) {
                     searchInfo.textContent = (S.searchIdx + 1) + ' / ' + S.searchResults.length;
-        
+
                     // Disable Prev if we are on the very first result (index 0)
                     if (prevBtn) prevBtn.disabled = (S.searchIdx === 0);
-        
+
                     // Disable Next if we are on the very last result
                     if (nextBtn) nextBtn.disabled = (S.searchIdx === S.searchResults.length - 1);
                 } else {
@@ -385,27 +385,27 @@
 
             function searchNav(dir) {
                 if (!S.searchResults.length) return;
-    
+
                 // Calculate the next index without wrapping
                 var nextIdx = S.searchIdx + dir;
                 if (nextIdx < 0 || nextIdx >= S.searchResults.length) {
                     return; // Stop at the beginning or the end!
                 }
-    
+
                 S.searchIdx = nextIdx;
                 var r = S.searchResults[S.searchIdx];
-    
+
                 var targetCanvas = canvasWrap.querySelectorAll('.pv-cont-page')[r.pageNum - 1];
                 if (targetCanvas && r.rects && r.rects[0]) {
                     // Calculate the exact pixel location of the highlighted word
                     var exactY = targetCanvas.offsetTop + (r.rects[0].y * S.scale) - (canvasWrap.clientHeight / 2);
-        
+
                     canvasWrap.scrollTo({
                         top: Math.max(0, exactY),
                         behavior: 'smooth'
                     });
                 }
-    
+
                 updateSearchInfo();
                 renderDocument(); // Updates the orange "active" highlight color
             }
@@ -427,7 +427,7 @@
                 var a = b.getAttribute('data-action');
 
                 switch (a) {
-                    case 'prev': 
+                    case 'prev':
                         if (S.page > 1) {
                             var prevCanvas = canvasWrap.querySelectorAll('.pv-cont-page')[S.page - 2];
                             if (prevCanvas) {
@@ -437,7 +437,7 @@
                             }
                         }
                         break;
-                    case 'next': 
+                    case 'next':
                         if (S.page < S.total) {
                             var nextCanvas = canvasWrap.querySelectorAll('.pv-cont-page')[S.page];
                             if (nextCanvas) {
@@ -490,34 +490,73 @@
                         }
                         break;
                     case 'fullscreen':
+                        // 1. Toggle State
                         S.isFs = !S.isFs;
-                        S.userZoomed = false;
-                        
-                        // Trigger the Browser's Native Fullscreen API
+
                         if (S.isFs) {
+                            // Find the sidebar specifically to check its class
+                            var currentSidebar = root.querySelector('[data-el="sidebar"]');
+                            if (currentSidebar && currentSidebar.classList.contains('open')) {
+                                var thumbBtn = root.querySelector('[data-action="sidebar"]');
+                                if (thumbBtn) {
+                                    thumbBtn.click();
+                                }
+                            }
                             if (root.requestFullscreen) root.requestFullscreen();
-                            else if (root.webkitRequestFullscreen) root.webkitRequestFullscreen(); // Safari
-                            else if (root.msRequestFullscreen) root.msRequestFullscreen(); // Edge/IE
+                            else if (root.webkitRequestFullscreen) root.webkitRequestFullscreen();
+
+                            // Start Watchdog for 'Esc' key
+                            if (window.pvWatchdog) clearInterval(window.pvWatchdog);
+                            window.pvWatchdog = setInterval(function() {
+                                if (!document.fullscreenElement && !document.webkitIsFullScreen) {
+
+                                    S.isFs = false;
+                                    root.classList.remove('fullscreen');
+                                    b.classList.remove('active'); // b is the button from your click listener
+
+                                    if (S.fitMode === 'height') fitHeight(); else fitWidth();
+                                    window.dispatchEvent(new Event('resize'));
+
+                                    clearInterval(window.pvWatchdog);
+                                }
+                            }, 500);
                         } else {
-                            if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                            // EXITING MANUALLY
+                            if (window.pvWatchdog) clearInterval(window.pvWatchdog);
+
+                            if (document.fullscreenElement || document.webkitFullscreenElement) {
                                 if (document.exitFullscreen) document.exitFullscreen();
                                 else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-                                else if (document.msExitFullscreen) document.msExitFullscreen();
                             }
                         }
-            
-                        // Toggle the CSS class for our internal styling
+
+                        // 2. Update CSS classes
                         root.classList.toggle('fullscreen', S.isFs);
-                        
-                        // Recalculate the canvas sizes after the screen transition
+                        b.classList.toggle('active', S.isFs);
+
+                        // 3. Layout Refresh
                         setTimeout(function() {
-                            if (CFG.defaultZoom === 'fit_height' || S.fitMode === 'height') fitHeight();
-                            else fitWidth();
-                            
-                            // Auto-scroll back to the page the user was just looking at!
-                            var targetCanvas = canvasWrap.querySelectorAll('.pv-cont-page')[S.page - 1];
-                            if (targetCanvas) targetCanvas.scrollIntoView({ block: 'start' });
+                            if (S.fitMode === 'height') fitHeight(); else fitWidth();
+                            window.dispatchEvent(new Event('resize'));
                         }, 400);
+                        break;
+                    case 'thumbs':
+                        // 1. Toggle the internal state
+                        S.sidebarOpen = !S.sidebarOpen;
+
+                        // 2. Update the sidebar element using your pre-defined 'sidebar' variable
+                        if (sidebar) {
+                            sidebar.classList.toggle('open', S.sidebarOpen);
+                        }
+
+                        // 3. Update the button's active state
+                        b.classList.toggle('active', S.sidebarOpen);
+
+                        // 4. Adjust the main viewer margin
+                        var mainCont = root.querySelector('.pv-main');
+                        if (mainCont) {
+                            mainCont.style.marginLeft = S.sidebarOpen ? '200px' : '0';
+                        }
                         break;
                     case 'retry':
                         loadPDF();
@@ -529,7 +568,7 @@
                 pageInput.addEventListener('change', function(e) {
                     var n = parseInt(pageInput.value);
                     if (isNaN(n) || n < 1 || n > S.pdf.numPages) {
-                        pageInput.value = S.page; 
+                        pageInput.value = S.page;
                         return;
                     }
                     var targetCanvas = canvasWrap.querySelectorAll('.pv-cont-page')[n - 1];
@@ -565,22 +604,41 @@
                                     fitWidth(root);
                                 }
                             }, 100);
-                            
+
                             // Stop watching this specific viewer to save performance
                             tabObserver.unobserve(root);
                         }
                     }
                 });
-                
+
                 // Start monitoring the specific .pv-root element
                 tabObserver.observe(root);
             }
+            // Allow the tip link to trigger fullscreen
+            root.querySelectorAll('.pv-tip-link').forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Since we are already inside the 'boot' function,
+                    // we can just call the logic directly.
+
+                    if (!S.isFs) {
+                        // This manually triggers the same logic as the button
+                        // but without the bubbling "double-trigger" risk.
+                        var fsBtn = root.querySelector('[data-action="fullscreen"]');
+                        if (fsBtn) {
+                            // We just send the event to the button's logic
+                            // but keep it clean.
+                            fsBtn.dispatchEvent(new Event('click', { bubbles: true }));
+                        }
+                    }
+                });
+            });
 
             // Kick off the initial load
             loadPDF();
         });
     }
-    if (window.pdfjsLib) { 
-        boot(); 
+    if (window.pdfjsLib) {
+        boot();
     }
 })();
