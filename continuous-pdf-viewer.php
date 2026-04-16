@@ -71,6 +71,9 @@ function cpv_render_shortcode( $atts ) {
     $v_status_bar      = $f_status_bar ? '' : ' pv-hidden';
     $sb_vis            = $f_thumbnails ? '' : ' pv-hidden';
 
+    // Fetch the global option (with the default fallback)
+    $pro_tip_text = get_option('cpv_global_pro_tip', 'Pro-Tip: Click <a href="#" class="pv-tip-link">Full Screen</a> for the best viewing experience.');
+
     ob_start();
     ?>
     <style>
@@ -91,7 +94,8 @@ function cpv_render_shortcode( $atts ) {
          data-zoom-step="<?php echo esc_attr( $zoom_step ); ?>"
          data-start-page="<?php echo esc_attr( $start_page ); ?>"
          data-loading-text="<?php echo esc_attr( $loading_text ); ?>"
-         data-error-text="<?php echo esc_attr( $error_text ); ?>">
+         data-error-text="<?php echo esc_attr( $error_text ); ?>"
+         data-pro-tip="<?php echo esc_attr( $pro_tip_text ); ?>">
 
         <?php if ( $title || $subtitle || $brand ) : ?>
             <div class="pv-header">
@@ -357,8 +361,45 @@ function cpv_enqueue_block_editor_assets() {
     );
 }
 
+// 8. Register the setting
+add_action('admin_init', 'cpv_register_settings');
+function cpv_register_settings() {
+    register_setting('cpv_settings_group', 'cpv_global_pro_tip');
+}
+
+// 9. Add the Settings Page to the WordPress menu
+add_action('admin_menu', 'cpv_add_settings_page');
+function cpv_add_settings_page() {
+    add_options_page('PDF Viewer Settings', 'PDF Viewer', 'manage_options', 'cpv-settings', 'cpv_settings_page_html');
+}
+
+// 10. Render the Settings Page UI
+function cpv_settings_page_html() {
+    // The default tip if the option hasn't been saved yet
+    $default_tip = 'Pro-Tip: Click <a href="#" class="pv-tip-link">Full Screen</a> for the best viewing experience.';
+    $current_tip = get_option('cpv_global_pro_tip', $default_tip);
+    ?>
+    <div class="wrap">
+        <h1>Continuous PDF Viewer Settings</h1>
+        <form method="post" action="options.php">
+            <?php settings_fields('cpv_settings_group'); ?>
+            <table class="form-table">
+                <tr valign="top">
+                    <th scope="row">Toolbar Pro Tip Text</th>
+                    <td>
+                        <textarea name="cpv_global_pro_tip" rows="3" style="width: 100%; max-width: 600px;"><?php echo esc_textarea($current_tip); ?></textarea>
+                        <p class="description">Leave this completely blank to remove the tip and the lightbulb icon from the toolbar.</p>
+                    </td>
+                </tr>
+            </table>
+            <?php submit_button(); ?>
+        </form>
+    </div>
+    <?php
+}
+
 /**
- * 7. Admin Settings Page HTML
+ * 11. Admin Settings Page HTML
  */
 function cpv_admin_page() {
 if ( ! current_user_can( 'edit_posts' ) ) return;
