@@ -25,7 +25,8 @@
                 title: root.dataset.title || '',
                 coverMode: root.classList.contains('pv-has-cover'),
                 hasCoverImage: !!root.querySelector('.pv-cover-image'),
-                hasThumbs: !!root.querySelector('.pv-sidebar')
+                hasThumbs: !!root.querySelector('.pv-sidebar'),
+                proTipText: root.dataset.proTip !== undefined ? root.dataset.proTip : ''
             };
 
             // Setup Viewer State
@@ -614,25 +615,34 @@
                 // Start monitoring the specific .pv-root element
                 tabObserver.observe(root);
             }
-            // Allow the tip link to trigger fullscreen
-            root.querySelectorAll('.pv-tip-link').forEach(function(link) {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    // Since we are already inside the 'boot' function,
-                    // we can just call the logic directly.
+            // --- DYNAMIC PRO TIP TEXT & VISIBILITY ---
+            var proTipContainer = root.querySelector('.pv-viewer-tip');
+            var proTipTextSpan = root.querySelector('.pv-tip-text');
 
-                    if (!S.isFs) {
-                        // This manually triggers the same logic as the button
-                        // but without the bubbling "double-trigger" risk.
-                        var fsBtn = root.querySelector('[data-action="fullscreen"]');
-                        if (fsBtn) {
-                            // We just send the event to the button's logic
-                            // but keep it clean.
-                            fsBtn.dispatchEvent(new Event('click', { bubbles: true }));
-                        }
-                    }
-                });
-            });
+            if (proTipContainer && proTipTextSpan) {
+                // 1. Check if the WordPress setting is completely empty
+                if (CFG.proTipText.trim() === '') {
+                    // Hide the entire element (including the lightbulb icon)
+                    proTipContainer.style.display = 'none';
+                } else {
+                    // 2. Inject the HTML string into the text span
+                    proTipTextSpan.innerHTML = CFG.proTipText;
+                    proTipContainer.style.display = ''; // Ensure it remains visible
+
+                    // 3. Attach the Fullscreen listener to the newly injected link
+                    root.querySelectorAll('.pv-tip-link').forEach(function(link) {
+                        link.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            if (!S.isFs) {
+                                var fsBtn = root.querySelector('[data-action="fullscreen"]');
+                                if (fsBtn) {
+                                    fsBtn.dispatchEvent(new Event('click', { bubbles: true }));
+                                }
+                            }
+                        });
+                    });
+                }
+            }
 
             // Kick off the initial load
             loadPDF();
