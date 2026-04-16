@@ -45,13 +45,13 @@ Note: Generating complex shortcodes is highly recommended via the built-in Short
 
 == Changelog ==
 
-= 2.1.0 =
-* New: Highly-optimized Continuous Scroll engine replaces the legacy single-page view.
-* New: Pressing the Enter key inside the search bar now accurately loops through highlighted results.
-* New: High-DPI (Retina) screen support added to the canvas rendering loop for crystal-clear text.
-* Fix: Replaced legacy CSS flexbox centering to eliminate the "cut-off top" bug on tall pages.
-* Tweak: Search navigation buttons now visually disable when reaching the first or last search result.
-* Deprecated: The legacy view_mode setting (Single Page vs. Continuous) has been removed.
+= 2.1.3 =
+* removed an extra file that didn't belong
+* removed some !important from the CSS and add a tooltip to the PDF viewer panel
+* fixed some issues with going full screen
+* hide the thumbnail button on mobile
+* hide the sidebar when going fullscreen
+* make the tool tip text into a PDF Viewer setting which can be changed by the user
 
 = 2.1.1 =
 * Changed the default height from 600px to 80vh
@@ -59,9 +59,10 @@ Note: Generating complex shortcodes is highly recommended via the built-in Short
 * Set the default heights to 80vh for desktop, 70vh for tablet, and 60vh for mobile rather than a specific px value.
 * wrapped some output in escape_* functions
 
-= 2.1.3 =
-* removed an extra file that didn't belong
-* removed some !important from the CSS and add a tooltip to the PDF viewer panel
-* fixed some issues with going full screen
-* hide the thumbnail button on mobile
-* hide the sidebar when going fullscreen
+= 2.1.0 =
+* New: Highly-optimized Continuous Scroll engine replaces the legacy single-page view.
+* New: Pressing the Enter key inside the search bar now accurately loops through highlighted results.
+* New: High-DPI (Retina) screen support added to the canvas rendering loop for crystal-clear text.
+* Fix: Replaced legacy CSS flexbox centering to eliminate the "cut-off top" bug on tall pages.
+* Tweak: Search navigation buttons now visually disable when reaching the first or last search result.
+* Deprecated: The legacy view_mode setting (Single Page vs. Continuous) has been removed.
