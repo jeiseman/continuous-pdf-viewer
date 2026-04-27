@@ -2,7 +2,7 @@ jQuery(function($){
   'use strict';
 
   function setImportFeedback(message,type){
-    var $fb=$('#cpv-import-feedback');
+    var $fb=$('#cpdfv-import-feedback');
     $fb.removeClass('is-success is-error').text(message||'');
     if(type){ $fb.addClass(type==='success' ? 'is-success' : 'is-error'); }
   }
@@ -12,9 +12,9 @@ jQuery(function($){
       var $el=$(this),attr=$el.data('attr'),def=DEFAULTS[attr]||'';
       if($el.is(':checkbox')){
         $el.prop('checked',def==='yes');
-      }else if($el.hasClass('cpv-pill')){
+      }else if($el.hasClass('cpdfv-pill')){
         if(def==='yes') $el.addClass('active'); else $el.removeClass('active');
-      }else if($el.hasClass('cpv-color')){
+      }else if($el.hasClass('cpdfv-color')){
         $el.val(def);
         try{ $el.wpColorPicker('color',def||'#ffffff'); }catch(e){}
         if(!def) $el.val('');
@@ -45,11 +45,11 @@ jQuery(function($){
 
       $targets.each(function(){
         var $el=$(this);
-        if($el.hasClass('cpv-pill')){
+        if($el.hasClass('cpdfv-pill')){
           $el.toggleClass('active', String(value).toLowerCase()==='yes');
         }else if($el.is(':checkbox')){
           $el.prop('checked', String(value).toLowerCase()==='yes');
-        }else if($el.hasClass('cpv-color')){
+        }else if($el.hasClass('cpdfv-color')){
           $el.val(value);
           try{ $el.wpColorPicker('color', value || '#ffffff'); }catch(e){}
           if(!value) $el.val('');
@@ -65,30 +65,30 @@ jQuery(function($){
     return matched;
   }
 
-  $('.cpv-color').wpColorPicker({
+  $('.cpdfv-color').wpColorPicker({
     change:function(){setTimeout(buildShortcode,50)},
     clear:function(){setTimeout(buildShortcode,50)}
   });
 
-  $('#cpv-media-btn').on('click',function(e){
+  $('#cpdfv-media-btn').on('click',function(e){
     e.preventDefault();
     var frame=wp.media({title:'Select PDF File',library:{type:'application/pdf'},multiple:false});
     frame.on('select',function(){
-      $('#cpv_url').val(frame.state().get('selection').first().toJSON().url).trigger('input');
+      $('#cpdfv_url').val(frame.state().get('selection').first().toJSON().url).trigger('input');
     });
     frame.open();
   });
 
-  $('#cpv-cover-media-btn').on('click',function(e){
+  $('#cpdfv-cover-media-btn').on('click',function(e){
     e.preventDefault();
     var frame=wp.media({title:'Select Cover Image',library:{type:'image'},multiple:false});
     frame.on('select',function(){
-      $('#cpv_cover_image').val(frame.state().get('selection').first().toJSON().url).trigger('input');
+      $('#cpdfv_cover_image').val(frame.state().get('selection').first().toJSON().url).trigger('input');
     });
     frame.open();
   });
 
-  $(document).on('click','.cpv-pill',function(){
+  $(document).on('click','.cpdfv-pill',function(){
     $(this).toggleClass('active');
     buildShortcode();
   });
@@ -97,7 +97,7 @@ jQuery(function($){
   $('[data-attr]').each(function(){
     var $el=$(this),attr=$el.data('attr');
     if($el.is(':checkbox')) DEFAULTS[attr]=$el.data('default')||'yes';
-    else if($el.hasClass('cpv-pill')) DEFAULTS[attr]=$el.data('default')||'yes';
+    else if($el.hasClass('cpdfv-pill')) DEFAULTS[attr]=$el.data('default')||'yes';
     else DEFAULTS[attr]=($el.data('default')!==undefined)?String($el.data('default')):'';
   });
 
@@ -107,9 +107,9 @@ jQuery(function($){
       var $el=$(this),attr=$el.data('attr'),val,def;
       if($el.is(':checkbox')){
         val=$el.is(':checked')?'yes':'no';def=DEFAULTS[attr]||'yes';
-      }else if($el.hasClass('cpv-pill')){
+      }else if($el.hasClass('cpdfv-pill')){
         val=$el.hasClass('active')?'yes':'no';def=DEFAULTS[attr]||'yes';
-      }else if($el.hasClass('cpv-color')){
+      }else if($el.hasClass('cpdfv-color')){
         val=$el.val()||'';def=DEFAULTS[attr]||'';
       }else{
         val=$.trim($el.val());def=DEFAULTS[attr]||'';
@@ -120,14 +120,14 @@ jQuery(function($){
         parts.push(attr+'="'+val+'"');c++;
       }
     });
-    $('#cpv-shortcode-output').val(parts.length?'[pdf_viewer '+parts.join(' ')+']':'[pdf_viewer url=""]');
-    $('#cpv-attr-count').text(c+' attribute'+(c!==1?'s':'')+' set');
+    $('#cpdfv-shortcode-output').val(parts.length?'[pdf_viewer '+parts.join(' ')+']':'[pdf_viewer url=""]');
+    $('#cpdfv-attr-count').text(c+' attribute'+(c!==1?'s':'')+' set');
   }
 
   $(document).on('input change','[data-attr]',buildShortcode);
 
-  $('#cpv-copy-btn').on('click',function(){
-    var $b=$(this),ta=document.getElementById('cpv-shortcode-output');
+  $('#cpdfv-copy-btn').on('click',function(){
+    var $b=$(this),ta=document.getElementById('cpdfv-shortcode-output');
     ta.select();ta.setSelectionRange(0,99999);
     navigator.clipboard.writeText(ta.value).then(function(){
       $b.addClass('copied').html('&#10003; Copied!');
@@ -137,14 +137,14 @@ jQuery(function($){
     });
   });
 
-  $('#cpv-reset-btn').on('click',function(){
+  $('#cpdfv-reset-btn').on('click',function(){
     resetFormToDefaults();
     buildShortcode();
     setImportFeedback('');
   });
 
-  $('#cpv-import-btn').on('click',function(){
-    var raw=$.trim($('#cpv-import-shortcode').val());
+  $('#cpdfv-import-btn').on('click',function(){
+    var raw=$.trim($('#cpdfv-import-shortcode').val());
     if(!raw){
       setImportFeedback('Paste a [pdf_viewer ...] shortcode first.','error');
       return;
@@ -158,8 +158,8 @@ jQuery(function($){
     setImportFeedback('Imported '+matched+' attribute'+(matched!==1?'s':'')+'.','success');
   });
 
-  $('#cpv-clear-import-btn').on('click',function(){
-    $('#cpv-import-shortcode').val('');
+  $('#cpdfv-clear-import-btn').on('click',function(){
+    $('#cpdfv-import-shortcode').val('');
     setImportFeedback('');
   });
 

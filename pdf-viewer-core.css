@@ -1,42 +1,42 @@
 /* 1. Global Reset & Fonts */
-.pv-root * { box-sizing: border-box; margin: 0; padding: 0; }
+.cpdfv-root * { box-sizing: border-box; margin: 0; padding: 0; }
 
-.pv-root {
-    --pv-sidebar-w: 240px;
-    --pv-toolbar-h: 52px;
-    --pv-bg: #f4f5f7;
-    --pv-surface: #ffffff;
-    --pv-surface-2: #edeef1;
-    --pv-border: rgba(0,0,0,0.07);
-    --pv-text: #1a1c24;
-    --pv-text-muted: #6b6f7e;
-    --pv-accent: #4f7df3;
+.cpdfv-root {
+    --cpdfv-sidebar-w: 240px;
+    --cpdfv-toolbar-h: 52px;
+    --cpdfv-bg: #f4f5f7;
+    --cpdfv-surface: #ffffff;
+    --cpdfv-surface-2: #edeef1;
+    --cpdfv-border: rgba(0,0,0,0.07);
+    --cpdfv-text: #1a1c24;
+    --cpdfv-text-muted: #6b6f7e;
+    --cpdfv-accent: #4f7df3;
 
     font-family: inherit;
-    background: var(--pv-bg);
-    color: var(--pv-text);
+    background: var(--cpdfv-bg);
+    color: var(--cpdfv-text);
     display: flex;
     flex-direction: column;
     position: relative;
     overflow: hidden;
-    border: 1px solid var(--pv-border);
+    border: 1px solid var(--cpdfv-border);
     border-radius: 8px;
     height: 80vh; /* Default height */
     min-height: 400px;
 }
 
 /* Dark Theme */
-.pv-dark {
-    --pv-bg: #0f1117;
-    --pv-surface: #181a22;
-    --pv-surface-2: #22252f;
-    --pv-border: rgba(255,255,255,0.06);
-    --pv-text: #e8e9ed;
-    --pv-text-muted: #8a8d9b;
+.cpdfv-dark {
+    --cpdfv-bg: #0f1117;
+    --cpdfv-surface: #181a22;
+    --cpdfv-surface-2: #22252f;
+    --cpdfv-border: rgba(255,255,255,0.06);
+    --cpdfv-text: #e8e9ed;
+    --cpdfv-text-muted: #8a8d9b;
 }
 
 /* --- FULLSCREEN FIX --- */
-div.pv-root.fullscreen {
+div.cpdfv-root.fullscreen {
     position: fixed;
     inset: 0;
     width: 100vw;
@@ -52,10 +52,10 @@ div.pv-root.fullscreen {
 }
 
 /* 2. Toolbar Layout */
-.pv-toolbar {
-    height: var(--pv-toolbar-h);
-    background: var(--pv-surface);
-    border-bottom: 1px solid var(--pv-border);
+.cpdfv-toolbar {
+    height: var(--cpdfv-toolbar-h);
+    background: var(--cpdfv-surface);
+    border-bottom: 1px solid var(--cpdfv-border);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -63,19 +63,19 @@ div.pv-root.fullscreen {
     z-index: 20;
 }
 
-.pv-toolbar-group {
+.cpdfv-toolbar-group {
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
-.pv-btn {
+.cpdfv-btn {
     width: 34px;
     height: 34px;
     border-radius: 6px;
     border: none;
     background: transparent;
-    color: var(--pv-text-muted);
+    color: var(--cpdfv-text-muted);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -83,59 +83,59 @@ div.pv-root.fullscreen {
     transition: all 0.2s;
 }
 
-.pv-btn:hover, .pv-btn.active {
-    background: var(--pv-surface-2);
-    color: var(--pv-text);
+.cpdfv-btn:hover, .cpdfv-btn.active {
+    background: var(--cpdfv-surface-2);
+    color: var(--cpdfv-text);
 }
 
-.pv-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+.cpdfv-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
 
 /* Page Number Input */
-.pv-page-input {
+.cpdfv-page-input {
     width: 40px;
     height: 28px;
     text-align: center;
-    border: 1px solid var(--pv-border);
+    border: 1px solid var(--cpdfv-border);
     border-radius: 4px;
-    background: var(--pv-bg);
-    color: var(--pv-text);
+    background: var(--cpdfv-bg);
+    color: var(--cpdfv-text);
     font-size: 14px;
 }
 
 /* --- SEARCH BAR HORIZONTAL FIX --- */
-.pv-search-bar {
+.cpdfv-search-bar {
     display: none;
     align-items: center;
     gap: 8px; /* Spaces out input, arrows, and X horizontally */
-    background: var(--pv-surface-2);
+    background: var(--cpdfv-surface-2);
     padding: 4px 8px;
     border-radius: 6px;
     margin-left: 8px;
 }
-.pv-search-bar.open {
+.cpdfv-search-bar.open {
     display: flex; /* Forces items into a row */
 }
-.pv-search-input {
-    border: 1px solid var(--pv-border);
-    background: var(--pv-surface);
-    color: var(--pv-text);
+.cpdfv-search-input {
+    border: 1px solid var(--cpdfv-border);
+    background: var(--cpdfv-surface);
+    color: var(--cpdfv-text);
     padding: 4px 8px;
     border-radius: 4px;
     width: 150px;
 }
 
 /* 3. Main Body & Sidebar (Fixes the "All Pages on Screen" issue) */
-.pv-body {
+.cpdfv-body {
     display: flex; /* Prevents vertical stacking of sidebar and canvas */
     flex: 1;
     overflow: hidden;
     position: relative;
 }
 
-.pv-sidebar {
-    width: var(--pv-sidebar-w);
-    background: var(--pv-surface);
-    border-right: 1px solid var(--pv-border);
+.cpdfv-sidebar {
+    width: var(--cpdfv-sidebar-w);
+    background: var(--cpdfv-surface);
+    border-right: 1px solid var(--cpdfv-border);
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -149,13 +149,13 @@ div.pv-root.fullscreen {
     transition: transform 0.3s ease;
     z-index: 10;
 }
-.pv-sidebar.open {
+.cpdfv-sidebar.open {
     transform: translateX(0);
     position: relative; /* Pushes the canvas to the right when open */
 }
 
 /* Thumbnails */
-/* Replace .pv-thumbs with the data attribute selector */
+/* Replace .cpdfv-thumbs with the data attribute selector */
 [data-el="thumbs"] {
     flex: 1 1 0%;      /* Forces the container to absorb exact remaining space */
     min-height: 0;     /* Overrides the flexbox 'auto' height protection */
@@ -173,11 +173,11 @@ div.pv-root.fullscreen {
     border-radius: 4px;
     padding: 4px;
     text-align: center;
-    background: var(--pv-bg);
+    background: var(--cpdfv-bg);
 }
 
 [data-el="thumbs"] > div.active {
-    border-color: var(--pv-accent);
+    border-color: var(--cpdfv-accent);
 }
 
 [data-el="thumbs"] canvas {
@@ -185,62 +185,62 @@ div.pv-root.fullscreen {
     height: auto;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
-.pv-thumb-item {
+.cpdfv-thumb-item {
     cursor: pointer;
     border: 2px solid transparent;
     border-radius: 4px;
     padding: 4px;
     text-align: center;
-    background: var(--pv-bg);
+    background: var(--cpdfv-bg);
 }
-.pv-thumb-item.active { border-color: var(--pv-accent); }
-.pv-thumb-item canvas { max-width: 100%; height: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-.pv-thumb-label { display: block; font-size: 12px; margin-top: 4px; color: var(--pv-text-muted); }
+.cpdfv-thumb-item.active { border-color: var(--cpdfv-accent); }
+.cpdfv-thumb-item canvas { max-width: 100%; height: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.cpdfv-thumb-label { display: block; font-size: 12px; margin-top: 4px; color: var(--cpdfv-text-muted); }
 
 /* Main Canvas Area */
-.pv-canvas-wrap {
+.cpdfv-canvas-wrap {
     flex: 1;
     overflow: auto;
     padding: 24px;
-    background: var(--pv-bg);
+    background: var(--cpdfv-bg);
     display: flex;
     justify-content: center;
     align-items: flex-start;
 }
-.pv-canvas-wrap canvas {
+.cpdfv-canvas-wrap canvas {
     box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     background: #fff;
 }
 
 /* Loader / Error */
-.pv-loader, .pv-error {
+.cpdfv-loader, .cpdfv-error {
     display: none;
     position: absolute;
     inset: 0;
-    background: var(--pv-bg);
+    background: var(--cpdfv-bg);
     z-index: 30;
     align-items: center;
     justify-content: center;
     flex-direction: column;
 }
-.pv-loader.active, .pv-error.active { display: flex; }
+.cpdfv-loader.active, .cpdfv-error.active { display: flex; }
 
 /* 4. Status Bar (Footer) */
-.pv-status {
+.cpdfv-status {
     height: 32px;
-    background: var(--pv-surface-2);
-    border-top: 1px solid var(--pv-border);
+    background: var(--cpdfv-surface-2);
+    border-top: 1px solid var(--cpdfv-border);
     display: flex;
     align-items: center;
     justify-content: space-between; /* Pushes 'Loaded' left and '3 pages' right */
     padding: 0 16px;
     font-size: 13px;
-    color: var(--pv-text-muted);
+    color: var(--cpdfv-text-muted);
     z-index: 20;
 }
 
 /* Optional: If they are right next to each other on the left instead of split */
-.pv-status-group {
+.cpdfv-status-group {
     display: flex;
     align-items: center;
     gap: 12px; /* Adds space if they are in the same flex group */
@@ -249,7 +249,7 @@ div.pv-root.fullscreen {
 /* --- CONTINUOUS SCROLL BULLETPROOF FIX --- */
 
 /* 1. Prevent the wrapper from using Flexbox centering */
-div.pv-root .pv-continuous-wrap {
+div.cpdfv-root .cpdfv-continuous-wrap {
     display: block;
     text-align: center;
     overflow-x: hidden;
@@ -260,7 +260,7 @@ div.pv-root .pv-continuous-wrap {
 }
 
 /* 2. Force canvases to stack vertically and maintain aspect ratio */
-div.pv-root .pv-continuous-wrap canvas.pv-cont-page {
+div.cpdfv-root .cpdfv-continuous-wrap canvas.cpdfv-cont-page {
     position: relative;
     display: block;
     margin: 0 auto 20px auto;
@@ -268,7 +268,7 @@ div.pv-root .pv-continuous-wrap canvas.pv-cont-page {
     left: auto;
     transform: none;
     /* !important is used here specifically to override the PDF engine's inline style stretch */
-    max-width: 100% !important;
+    max-width: 100% !important; 
     height: auto !important;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
@@ -276,34 +276,34 @@ div.pv-root .pv-continuous-wrap canvas.pv-cont-page {
 /* --- FULLSCREEN CONTINUOUS FIXES --- */
 
 /* 1. Ensure the root acts as a strict column in fullscreen */
-div.pv-root.fullscreen {
+div.cpdfv-root.fullscreen {
     display: flex;
     flex-direction: column;
     background: #e5e5e5;
 }
 
 /* 2. Force the toolbar and paging controls to stay visible */
-div.pv-root.fullscreen .pv-toolbar,
-div.pv-root.fullscreen .pv-page-nav {
+div.cpdfv-root.fullscreen .cpdfv-toolbar,
+div.cpdfv-root.fullscreen .cpdfv-page-nav {
     display: flex;
 }
 
 /* 3. Ensure the body takes up the rest of the screen without overflowing */
-div.pv-root.fullscreen .pv-body {
+div.cpdfv-root.fullscreen .cpdfv-body {
     flex-grow: 1;
     height: auto;
     min-height: 0;
 }
 
 /* 4. Force the continuous wrapper to handle the scrolling */
-div.pv-root.fullscreen .pv-continuous-wrap {
+div.cpdfv-root.fullscreen .cpdfv-continuous-wrap {
     height: 100%;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
 /* --- DISABLED BUTTON STATES --- */
-div.pv-root .pv-btn:disabled,
-div.pv-root .pv-btn[disabled] {
+div.cpdfv-root .cpdfv-btn:disabled,
+div.cpdfv-root .cpdfv-btn[disabled] {
     opacity: 0.3;
     cursor: not-allowed;
     pointer-events: none;
@@ -312,13 +312,13 @@ div.pv-root .pv-btn[disabled] {
 /* --- SEARCH BAR SIZING FIX --- */
 
 /* Target the wrapper using its exact data attribute */
-div.pv-root [data-el="searchBar"] {
+div.cpdfv-root [data-el="searchBar"] {
     gap: 8px;
     display: flex;
 }
 
 /* Target the input field using its exact data attribute */
-div.pv-root [data-el="searchInput"] {
+div.cpdfv-root [data-el="searchInput"] {
     width: 240px;
     min-width: 200px;
     padding: 6px 12px;
@@ -327,7 +327,7 @@ div.pv-root [data-el="searchInput"] {
 
 /* Mobile Optimization */
 @media (max-width: 650px) {
-    div.pv-root .pv-toolbar {
+    div.cpdfv-root .cpdfv-toolbar {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
@@ -336,69 +336,69 @@ div.pv-root [data-el="searchInput"] {
         gap: 5px;
     }
 
-    div.pv-root .pv-toolbar .pv-sep,
-    div.pv-root .pv-toolbar .pv-spacer,
-    div.pv-root .pv-btn[data-action="print"],
-    div.pv-root .pv-btn[data-action="sidebar"],
-    div.pv-root .pv-btn[data-action="download"] {
+    div.cpdfv-root .cpdfv-toolbar .cpdfv-sep,
+    div.cpdfv-root .cpdfv-toolbar .cpdfv-spacer,
+    div.cpdfv-root .cpdfv-btn[data-action="print"],
+    div.cpdfv-root .cpdfv-btn[data-action="sidebar"],
+    div.cpdfv-root .cpdfv-btn[data-action="download"] {
         display: none;
     }
 
-    div.pv-root .pv-toolbar .pv-btn {
+    div.cpdfv-root .cpdfv-toolbar .cpdfv-btn {
         flex: 0 0 40px;
         height: 40px;
         margin: 2px;
     }
-    div.pv_root .pv-thumbs {
+    div.pv_root .cpdfv-thumbs {
         display: none;
     }
-
+    
     /* This forces the PDF to use the full width in portrait */
-    div.pv_root .pv-main {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        width: 100% !important;
+    div.pv_root .cpdfv-main { 
+        margin-left: 0 !important; 
+        margin-right: 0 !important; 
+        width: 100% !important; 
     }
 }
 
-div.pv-viewer-tip {
-    background: var(--pv-surface-2);
-    border-bottom: 1px solid var(--pv-border);
+div.cpdfv-viewer-tip {
+    background: var(--cpdfv-surface-2);
+    border-bottom: 1px solid var(--cpdfv-border);
     padding: 8px 16px;
     display: flex;
     align-items: center;
     gap: 10px;
     font-size: 13px;
-    color: var(--pv-text);
+    color: var(--cpdfv-text);
 }
 
-div.pv-viewer-tip .pv-tip-icon {
+div.cpdfv-viewer-tip .cpdfv-tip-icon {
     font-size: 16px;
 }
 
-div.pv-viewer-tip .pv-tip-text strong {
-    color: var(--pv-accent);
+div.cpdfv-viewer-tip .cpdfv-tip-text strong {
+    color: var(--cpdfv-accent);
     font-weight: 600;
 }
 
 /* Hide the tip when in Full Screen to save space if you prefer */
-div.pv-root.fullscreen .pv-viewer-tip {
+div.cpdfv-root.fullscreen .cpdfv-viewer-tip {
     display: none;
 }
-.pv-tip-link {
-    color: var(--pv-accent);
+.cpdfv-tip-link {
+    color: var(--cpdfv-accent);
     text-decoration: underline;
     font-weight: 600;
     cursor: pointer;
 }
 
-.pv-tip-link:hover {
-    color: var(--pv-text);
+.cpdfv-tip-link:hover {
+    color: var(--cpdfv-text);
 }
 
 /* Hide the tip entirely when in fullscreen mode */
-:fullscreen .pv-viewer-tip,
-:-webkit-full-screen .pv-viewer-tip {
+:fullscreen .cpdfv-viewer-tip,
+:-webkit-full-screen .cpdfv-viewer-tip {
     display: none !important;
     visibility: hidden !important;
 }

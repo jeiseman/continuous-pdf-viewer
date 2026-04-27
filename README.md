@@ -1,6 +1,6 @@
 # Continuous PDF Viewer
 
-**Version:** 2.1.1
+**Version:** 2.1.5
 **Author:** Jonathan A Eiseman
 **License:** GPL2
 
@@ -26,8 +26,8 @@ A high-performance, WordPress-native PDF viewer powered by PDF.js. Version 2.1 i
 4. Use the right-hand Inspector Controls to customize the start page, default zoom, sidebar visibility, and colors.
 
 ### Using the Shortcode
-You can place the viewer anywhere using the `[pdf_viewer]` shortcode. 
+You can place the viewer anywhere using the `[continuous_pdf_viewer]` shortcode. 
 
 **Basic Example:**
 ```text
-[pdf_viewer url="[https://yoursite.com/wp-content/uploads/document.pdf](https://yoursite.com/wp-content/uploads/document.pdf)"]
+[continuous_pdf_viewer url="[https://yoursite.com/wp-content/uploads/document.pdf](https://yoursite.com/wp-content/uploads/document.pdf)"]
