@@ -76,3 +76,8 @@ Note: Generating complex shortcodes is highly recommended via the built-in Short
 * Fix: Replaced legacy CSS flexbox centering to eliminate the "cut-off top" bug on tall pages.
 * Tweak: Search navigation buttons now visually disable when reaching the first or last search result.
 * Deprecated: The legacy view_mode setting (Single Page vs. Continuous) has been removed.
+
+== Screenshots ==
+
+1. The Continuous PDF Viewer renderibng a document on the frontend
+2. The Gutenberg block for the Continuous PDF Viewer
