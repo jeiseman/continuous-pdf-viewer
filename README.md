@@ -1,6 +1,6 @@
 # Continuous PDF Viewer
 
-**Version:** 2.1.5
+**Version:** 2.1.6
 **Author:** Jonathan A Eiseman
 **License:** GPL2
 

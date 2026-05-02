@@ -213,18 +213,49 @@ function boot() {
             if (!S.pdf) return;
             var page = await S.pdf.getPage(S.page);
             var vp = page.getViewport({ scale: 1 });
+            
+            // Measure both available height AND width
             var h = Math.max(120, (canvasWrap ? canvasWrap.clientHeight : 600) - 48);
-            S.scale = Math.max(CFG.minZoom, Math.min(h / vp.height, CFG.maxZoom));
+            var w = Math.max(120, (canvasWrap ? canvasWrap.clientWidth : 800) - 48);
+            
+            // Calculate the theoretical scale for both dimensions
+            var scaleForHeight = h / vp.height;
+            var scaleForWidth = w / vp.width;
+            
+            // Since you do not want horizontal overflow, the scale can NEVER 
+            // exceed the max width of the screen. We use Math.min to act like "contain".
+            var maxAllowedScale = Math.min(scaleForHeight, scaleForWidth);
+            
+            // Set the scale safely within minimum and maximum limits
+            S.scale = Math.max(CFG.minZoom, Math.min(maxAllowedScale, CFG.maxZoom));
             S.fitMode = 'height';
+            
             if (zoomDisp) zoomDisp.textContent = Math.round(S.scale * 100) + '%';
             renderDocument();
         }
 
-        function setZoom(z) {
-            S.scale = Math.max(CFG.minZoom, Math.min(z, CFG.maxZoom));
+async function setZoom(z) {
+            if (!S.pdf) return;
+            
+            // 1. Check the true dimensions of the first page
+            var page = await S.pdf.getPage(1);
+            var vp = page.getViewport({ scale: 1 });
+            
+            // 2. Measure the physical space available on the screen (minus standard padding)
+            var maxW = (canvasWrap ? canvasWrap.clientWidth : 800) - 48;
+            
+            // 3. Calculate the maximum scale before the PDF hits the walls
+            var maxAllowedScale = maxW / vp.width;
+
+            // 4. Set the dynamic ceiling (never exceed the screen width OR your CFG max limit)
+            var hardMaxZoom = Math.min(CFG.maxZoom, maxAllowedScale);
+            
+            // 5. Apply the zoom safely
+            S.scale = Math.max(CFG.minZoom, Math.min(z, hardMaxZoom));
             S.userZoomed = true;
+            
             if (zoomDisp) zoomDisp.textContent = Math.round(S.scale * 100) + '%';
-            if (S.pdf) renderDocument();
+            renderDocument();
         }
 
         async function renderCover() {
@@ -592,6 +623,41 @@ function boot() {
                 }
             });
         }
+
+// --- VIEWPORT RESIZE & ROTATION HANDLER ---
+        function handleViewportChange() {
+            if (!S.pdf) return;
+            
+            clearTimeout(window.pvResizeTimer);
+            // 300ms allows the mobile browser time to finish rendering the new dimensions
+            window.pvResizeTimer = setTimeout(async function() {
+                if (!S.userZoomed) {
+                    // Re-calculate the auto-fits using the finalized physical screen size
+                    if (S.fitMode === 'height') {
+                        fitHeight();
+                    } else {
+                        fitWidth();
+                    }
+                } else {
+                    // If the user manually zoomed, check if the rotation broke the new screen limits
+                    var page = await S.pdf.getPage(1);
+                    var vp = page.getViewport({ scale: 1 });
+                    var maxW = (canvasWrap ? canvasWrap.clientWidth : 800) - 48;
+                    var maxAllowedScale = maxW / vp.width;
+
+                    // Force the JS scale down to match the CSS reality if the screen got too narrow
+                    if (S.scale > maxAllowedScale) {
+                        S.scale = maxAllowedScale;
+                        if (zoomDisp) zoomDisp.textContent = Math.round(S.scale * 100) + '%';
+                        renderDocument();
+                    }
+                }
+            }, 300);
+        }
+
+        // Listen for both standard window resizing and mobile-specific rotation
+        window.addEventListener('resize', handleViewportChange);
+        window.addEventListener('orientationchange', handleViewportChange);
 
         // --- INITIALIZE ---
         //

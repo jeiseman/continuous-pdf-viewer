@@ -3,7 +3,7 @@ Contributors: @joneiseman
 Tags: pdf, pdf viewer, document viewer, pdf.js, gutenberg
 Requires at least: 5.8
 Tested up to: 6.9
-Stable tag: 2.1.5
+Stable tag: 2.1.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,6 +44,9 @@ Advanced Example:
 Note: Generating complex shortcodes is highly recommended via the built-in Shortcode Generator under the Tools menu.
 
 == Changelog ==
+
+= 2.1.6 =
+* Fix the scale number in the toolbar so it matches the actual zoom level
 
 = 2.1.5 =
 * Removed the standard_fonts folder

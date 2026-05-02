@@ -3,7 +3,7 @@
  * Plugin Name: Continuous PDF Viewer
  * Plugin URI:  https://mafw.org
  * Description: A high-performance PDF viewer based on PDF.js with a shortcode generator and Gutenberg support.
- * Version:     2.1.5
+ * Version:     2.1.6
  * Author:      Jonathan A Eiseman
  * License:     GPL2
  */
@@ -357,11 +357,11 @@ function cpdfv_admin_menu() {
 add_action( 'admin_enqueue_scripts', 'cpdfv_admin_assets' );
 function cpdfv_admin_assets( $hook ) {
     if ( $hook !== 'tools_page_cpdfv-generator' ) return;
-    wp_enqueue_style( 'cpdfv-admin-css', plugins_url( 'pdf-viewer-admin.css', __FILE__ ), array(), '2.1.0' );
+    wp_enqueue_style( 'cpdfv-admin-css', plugins_url( 'pdf-viewer-admin.css', __FILE__ ), array(), '2.1.6' );
     wp_enqueue_style( 'wp-color-picker' );
     wp_enqueue_script( 'wp-color-picker' );
     wp_enqueue_media();
-    wp_enqueue_script( 'cpdfv-admin-js', plugins_url( 'pdf-viewer-admin.js', __FILE__ ), array( 'jquery', 'wp-color-picker' ), '2.1.0', true );
+    wp_enqueue_script( 'cpdfv-admin-js', plugins_url( 'pdf-viewer-admin.js', __FILE__ ), array( 'jquery', 'wp-color-picker' ), '2.1.6', true );
 }
 
 /**
