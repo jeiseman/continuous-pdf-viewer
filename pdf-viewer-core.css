@@ -53,7 +53,7 @@ div.cpdfv-root.fullscreen {
 
 /* 2. Toolbar Layout */
 .cpdfv-toolbar {
-    height: var(--cpdfv-toolbar-h);
+    height: auto;
     background: var(--cpdfv-surface);
     border-bottom: 1px solid var(--cpdfv-border);
     display: flex;
@@ -61,6 +61,8 @@ div.cpdfv-root.fullscreen {
     justify-content: space-between;
     padding: 0 12px;
     z-index: 20;
+    flex-wrap: wrap;
+    padding-bottom: 0;
 }
 
 .cpdfv-toolbar-group {
@@ -325,8 +327,8 @@ div.cpdfv-root [data-el="searchInput"] {
     font-size: 14px;
 }
 
-/* Mobile Optimization */
-@media (max-width: 650px) {
+/* Mobile Optimization - 2 Row Toolbar Limit */
+@media (max-width: 600px) {
     div.cpdfv-root .cpdfv-toolbar {
         display: flex;
         flex-wrap: wrap;
@@ -336,8 +338,8 @@ div.cpdfv-root [data-el="searchInput"] {
         gap: 5px;
     }
 
+    /* Hide secondary buttons to save space */
     div.cpdfv-root .cpdfv-toolbar .cpdfv-sep,
-    div.cpdfv-root .cpdfv-toolbar .cpdfv-spacer,
     div.cpdfv-root .cpdfv-btn[data-action="print"],
     div.cpdfv-root .cpdfv-btn[data-action="sidebar"],
     div.cpdfv-root .cpdfv-btn[data-action="download"] {
@@ -349,12 +351,13 @@ div.cpdfv-root [data-el="searchInput"] {
         height: 40px;
         margin: 2px;
     }
-    div.pv_root .cpdfv-thumbs {
+    
+    div.cpdfv-root [data-el="thumbs"] {
         display: none;
     }
     
-    /* This forces the PDF to use the full width in portrait */
-    div.pv_root .cpdfv-main { 
+    /* Forces the PDF to use the full width in portrait */
+    div.cpdfv-root .cpdfv-main { 
         margin-left: 0 !important; 
         margin-right: 0 !important; 
         width: 100% !important; 
@@ -363,13 +366,15 @@ div.cpdfv-root [data-el="searchInput"] {
 
 div.cpdfv-viewer-tip {
     background: var(--cpdfv-surface-2);
-    border-bottom: 1px solid var(--cpdfv-border);
     padding: 8px 16px;
     display: flex;
     align-items: center;
     gap: 10px;
     font-size: 13px;
     color: var(--cpdfv-text);
+    flex: 0 0 100%;
+    width: 100%;
+    border-top: 1px solid var(--cpdfv-border); /* Add border to top to divide it from buttons */
 }
 
 div.cpdfv-viewer-tip .cpdfv-tip-icon {
