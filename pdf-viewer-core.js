@@ -1,5 +1,19 @@
 import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
 
+// --- ADD PROMISE POLYFILL HERE ---
+if (typeof Promise.withResolvers === 'undefined') {
+    if (window) {
+        window.Promise.withResolvers = function () {
+            let resolve, reject;
+            const promise = new Promise((res, rej) => {
+                resolve = res;
+                reject = rej;
+            });
+            return { promise, resolve, reject };
+        };
+    }
+}
+
 // 1. Initialize Local PDF.js Worker
 if (window.cpdfvSettings) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = window.cpdfvSettings.workerUrl;
