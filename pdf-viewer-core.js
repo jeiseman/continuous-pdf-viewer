@@ -1,19 +1,5 @@
 import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
 
-// --- ADD PROMISE POLYFILL HERE ---
-if (typeof Promise.withResolvers === 'undefined') {
-    if (window) {
-        window.Promise.withResolvers = function () {
-            let resolve, reject;
-            const promise = new Promise((res, rej) => {
-                resolve = res;
-                reject = rej;
-            });
-            return { promise, resolve, reject };
-        };
-    }
-}
-
 // 1. Initialize Local PDF.js Worker
 if (window.cpdfvSettings) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = window.cpdfvSettings.workerUrl;
@@ -95,7 +81,13 @@ function boot() {
             }
 
             try {
-                S.pdf = await pdfjsLib.getDocument(CFG.url).promise;
+                // 1. Safety check: Ensure the URL actually exists before calling the library
+                if (!CFG.url) {
+                    throw new Error("No PDF URL was found in the HTML data attributes.");
+                }
+
+                // 2. Strict syntax: Pass the URL as an explicit object property
+                S.pdf = await pdfjsLib.getDocument({ url: CFG.url }).promise;
                 S.total = S.pdf.numPages;
                 S.page = Math.min(CFG.startPage, S.total);
 
