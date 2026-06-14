@@ -118,27 +118,48 @@ function boot() {
             }
         }
 
-        function renderDocument() {
+function renderDocument() {
             canvasWrap.classList.add('cpdfv-continuous-wrap');
-            
-            // Clear old canvases
-            var oldCanvases = canvasWrap.querySelectorAll('.cpdfv-cont-page');
-            oldCanvases.forEach(function(c) { c.remove(); });
-            
+
+            // Clear old pages (now targeting the new wrappers)
+            var oldPages = canvasWrap.querySelectorAll('.cpdfv-cont-page');
+            oldPages.forEach(function(c) { c.remove(); });
+
             if (loader) loader.style.display = 'flex';
 
             var dpr = window.devicePixelRatio || 1;
             var renderQueue = [];
 
-            // 1. Instantly construct the DOM layout so the user can scroll immediately
+            // 1. Instantly construct the DOM layout
             for (var i = 1; i <= S.pdf.numPages; i++) {
-                var pageCanvas = document.createElement('canvas');
-                pageCanvas.className = 'cpdfv-cont-page';
-                pageCanvas.setAttribute('data-page-num', i);
-                canvasWrap.appendChild(pageCanvas);
-                renderQueue.push({ pageNum: i, canvas: pageCanvas });
+                // The wrapper replaces the direct canvas element to hold the text layer
+                var pageWrap = document.createElement('div');
+                pageWrap.className = 'cpdfv-cont-page'; 
+                pageWrap.setAttribute('data-page-num', i);
+                pageWrap.style.position = 'relative';
+                pageWrap.style.width = 'fit-content'; 
+                pageWrap.style.margin = '0 auto 20px auto';
 
-                // Set up the smart scroll observer
+                var pageCanvas = document.createElement('canvas');
+                pageCanvas.className = 'cpdfv-canvas'; // The actual canvas element
+
+                var textLayer = document.createElement('div');
+                textLayer.className = 'cpdfv-text-layer';
+                textLayer.style.position = 'absolute';
+                textLayer.style.top = '0';
+                textLayer.style.left = '0';
+                textLayer.style.width = '100%';
+                textLayer.style.height = '100%';
+                textLayer.style.overflow = 'hidden';
+                textLayer.style.textAlign = 'left';
+
+                pageWrap.appendChild(pageCanvas);
+                pageWrap.appendChild(textLayer);
+                canvasWrap.appendChild(pageWrap);
+
+                renderQueue.push({ pageNum: i, canvas: pageCanvas, textLayer: textLayer, wrap: pageWrap });
+
+                // Update observer to watch the wrapper instead of the canvas directly
                 if (!S.scrollObserver) {
                     S.scrollObserver = new IntersectionObserver(function(entries) {
                         entries.forEach(function(entry) {
@@ -155,25 +176,26 @@ function boot() {
                         });
                     }, { root: canvasWrap, rootMargin: '-40% 0px -40% 0px', threshold: 0 });
                 }
-                S.scrollObserver.observe(pageCanvas);
+                S.scrollObserver.observe(pageWrap);
             }
 
-            // 2. Process rendering sequentially to prevent browser lag
+            // 2. Process rendering sequentially
             function processQueue() {
                 if (renderQueue.length === 0) {
                     if (loader) loader.style.display = 'none';
                     return;
                 }
                 var task = renderQueue.shift();
-                
+
                 S.pdf.getPage(task.pageNum).then(function(page) {
                     var viewport = page.getViewport({ scale: S.scale * dpr });
+                    var cssViewport = page.getViewport({ scale: S.scale }); // Normal scale for DOM positioning
                     var ctx = task.canvas.getContext('2d');
-                    
+
                     task.canvas.height = viewport.height;
                     task.canvas.width = viewport.width;
-                    task.canvas.style.width = (viewport.width / dpr) + 'px';
-                    task.canvas.style.height = (viewport.height / dpr) + 'px';
+                    task.canvas.style.width = cssViewport.width + 'px';
+                    task.canvas.style.height = cssViewport.height + 'px';
 
                     page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function() {
                         // Apply Search Highlights
@@ -196,11 +218,49 @@ function boot() {
                                 });
                             }
                         }
-                        processQueue();
+
+                        // GENERATE THE INVISIBLE TEXT LAYER FOR COPYING
+                        page.getTextContent().then(function(txt) {
+                            task.textLayer.innerHTML = '';
+                            
+                            txt.items.forEach(function(item) {
+                                var span = document.createElement('span');
+                                span.textContent = item.str + ' '; // Added space for natural word separation
+                                span.style.position = 'absolute';
+                                span.style.color = 'transparent';
+                                span.style.cursor = 'text';
+
+                                // Extract scaling and coordinates from PDF transformation matrix
+                                var tx = item.transform;
+                                var fs = Math.sqrt(tx[0] * tx[0] + tx[1] * tx[1]);
+                                var x = tx[4] * S.scale;
+                                // PDF coordinates originate from bottom-left, CSS from top-left
+                                var y = cssViewport.height - (tx[5] * S.scale) - (fs * S.scale);
+
+                                span.style.left = x + 'px';
+                                span.style.top = y + 'px';
+                                span.style.fontSize = (fs * S.scale) + 'px';
+                                span.style.width = (item.width * S.scale) + 'px';
+                                span.style.height = (fs * S.scale * 1.2) + 'px';
+                                span.style.lineHeight = 1;
+                                span.style.whiteSpace = 'pre';
+                                
+                                // Ensure text selection is allowed by the browser
+                                span.style.userSelect = 'text';
+                                span.style.webkitUserSelect = 'text';
+
+                                task.textLayer.appendChild(span);
+                            });
+
+                            processQueue(); // Move to the next page only after text layer finishes
+                        }).catch(function() {
+                            processQueue(); // Failsafe: if text extraction fails, still render the next page
+                        });
+
                     });
                 });
             }
-            
+
             processQueue();
         }
 
@@ -240,27 +300,17 @@ function boot() {
             renderDocument();
         }
 
-async function setZoom(z) {
+        async function setZoom(z) {
             if (!S.pdf) return;
-            
-            // 1. Check the true dimensions of the first page
-            var page = await S.pdf.getPage(1);
-            var vp = page.getViewport({ scale: 1 });
-            
-            // 2. Measure the physical space available on the screen (minus standard padding)
-            var maxW = (canvasWrap ? canvasWrap.clientWidth : 800) - 48;
-            
-            // 3. Calculate the maximum scale before the PDF hits the walls
-            var maxAllowedScale = maxW / vp.width;
 
-            // 4. Set the dynamic ceiling (never exceed the screen width OR your CFG max limit)
-            var hardMaxZoom = Math.min(CFG.maxZoom, maxAllowedScale);
-            
-            // 5. Apply the zoom safely
-            S.scale = Math.max(CFG.minZoom, Math.min(z, hardMaxZoom));
+            // Apply the zoom safely, restricted ONLY by your absolute min and max configurations
+            S.scale = Math.max(CFG.minZoom, Math.min(z, CFG.maxZoom));
             S.userZoomed = true;
-            
+
+            // Update the percentage display in the UI
             if (zoomDisp) zoomDisp.textContent = Math.round(S.scale * 100) + '%';
+            
+            // Redraw the canvas and text layer at the new scale
             renderDocument();
         }
 
@@ -626,6 +676,55 @@ async function setZoom(z) {
                     } else {
                         doSearch(val);
                     }
+                }
+            });
+        }
+
+        // --- PINCH TO ZOOM HANDLER ---
+        var initialPinchDistance = null;
+        var pinchZoomThreshold = 60; // How far fingers must move before triggering a zoom step
+
+        if (canvasWrap) {
+            canvasWrap.addEventListener('touchstart', function(e) {
+                if (e.touches.length === 2) {
+                    // Calculate the initial distance between the two fingers
+                    initialPinchDistance = Math.hypot(
+                        e.touches[0].pageX - e.touches[1].pageX,
+                        e.touches[0].pageY - e.touches[1].pageY
+                    );
+                }
+            }, { passive: true });
+
+            canvasWrap.addEventListener('touchmove', function(e) {
+                if (e.touches.length === 2 && initialPinchDistance !== null) {
+                    // Calculate the new distance as fingers move
+                    var currentDistance = Math.hypot(
+                        e.touches[0].pageX - e.touches[1].pageX,
+                        e.touches[0].pageY - e.touches[1].pageY
+                    );
+
+                    var diff = currentDistance - initialPinchDistance;
+
+                    // If the fingers moved past our threshold, trigger a zoom
+                    if (Math.abs(diff) > pinchZoomThreshold) {
+                        if (diff > 0) {
+                            // Fingers moved apart: Zoom In
+                            setZoom(S.scale + CFG.zoomStep);
+                        } else {
+                            // Fingers pinched together: Zoom Out
+                            setZoom(S.scale - CFG.zoomStep);
+                        }
+                        
+                        // Reset the baseline distance to require another distinct movement for the next zoom level
+                        initialPinchDistance = currentDistance;
+                    }
+                }
+            }, { passive: true });
+
+            canvasWrap.addEventListener('touchend', function(e) {
+                // If the user lifts a finger, reset the pinch tracker
+                if (e.touches.length < 2) {
+                    initialPinchDistance = null;
                 }
             });
         }

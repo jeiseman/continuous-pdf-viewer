@@ -254,11 +254,12 @@ div.cpdfv-root.fullscreen {
 div.cpdfv-root .cpdfv-continuous-wrap {
     display: block;
     text-align: center;
-    overflow-x: hidden;
+    overflow-x: auto;
     overflow-y: auto;
     padding: 20px 0;
     align-items: normal;
     justify-content: normal;
+    -webkit-overflow-scrolling: touch !important;
 }
 
 /* 2. Force canvases to stack vertically and maintain aspect ratio */
@@ -273,6 +274,10 @@ div.cpdfv-root .cpdfv-continuous-wrap canvas.cpdfv-cont-page {
     max-width: 100% !important; 
     height: auto !important;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+/* 2. Ensure the individual page wrappers don't clip their own text layers */
+div.cpdfv-root .cpdfv-cont-page {
+    overflow: visible !important;
 }
 
 /* --- FULLSCREEN CONTINUOUS FIXES --- */
