@@ -3,7 +3,7 @@ Contributors: @joneiseman
 Tags: pdf, pdf viewer, document viewer, pdf.js, gutenberg
 Requires at least: 5.8
 Tested up to: 7.0
-Stable tag: 2.1.10
+Stable tag: 2.1.11
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,6 +44,8 @@ Advanced Example:
 Note: Generating complex shortcodes is highly recommended via the built-in Shortcode Generator under the Tools menu.
 
 == Changelog ==
+= 2.1.11 =
+* Don't cause page to jump when clicking on the next page button
 
 = 2.1.10 =
 * Allow pinch to zoom

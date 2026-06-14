@@ -514,26 +514,40 @@ function renderDocument() {
         root.addEventListener('click', function(e) {
             var b = e.target.closest('[data-action]');
             if (!b) return;
+
+            // Prevent the browser from trying to jump the whole page if the button is a link
+            e.preventDefault();
+
             var a = b.getAttribute('data-action');
 
             switch (a) {
-                case 'prev': 
+                case 'prev':
                     if (S.page > 1) {
                         var prevCanvas = canvasWrap.querySelectorAll('.cpdfv-cont-page')[S.page - 2];
                         if (prevCanvas) {
-                            S.page--; // Instantly update internal state
-                            if (pageInput) pageInput.value = S.page; // Instantly update toolbar
-                            prevCanvas.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            S.page--; 
+                            if (pageInput) pageInput.value = S.page; 
+                            
+                            // Scroll ONLY the internal PDF container, not the whole web page
+                            canvasWrap.scrollTo({ 
+                                top: prevCanvas.offsetTop, 
+                                behavior: 'smooth' 
+                            });
                         }
                     }
                     break;
-                case 'next': 
+                case 'next':
                     if (S.page < S.total) {
                         var nextCanvas = canvasWrap.querySelectorAll('.cpdfv-cont-page')[S.page];
                         if (nextCanvas) {
-                            S.page++; // Instantly update internal state
-                            if (pageInput) pageInput.value = S.page; // Instantly update toolbar
-                            nextCanvas.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            S.page++; 
+                            if (pageInput) pageInput.value = S.page; 
+                            
+                            // Scroll ONLY the internal PDF container, not the whole web page
+                            canvasWrap.scrollTo({ 
+                                top: nextCanvas.offsetTop, 
+                                behavior: 'smooth' 
+                            });
                         }
                     }
                     break;
