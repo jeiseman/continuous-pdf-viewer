@@ -1,9 +1,10 @@
 import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
 
-// 1. Initialize Local PDF.js Worker
-if (window.cpdfvSettings) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = window.cpdfvSettings.workerUrl;
-}
+// Set the worker path directly
+pdfjsLib.GlobalWorkerOptions.workerSrc = cpdfvSettings.workerUrl;
+
+// Set the worker path globally
+pdfjsLib.GlobalWorkerOptions.workerSrc = cpdfvSettings.workerUrl;
 
 // 2. The main initialization loop
 function boot() {
@@ -87,7 +88,13 @@ function boot() {
                 }
 
                 // 2. Strict syntax: Pass the URL as an explicit object property
-                S.pdf = await pdfjsLib.getDocument({ url: CFG.url }).promise;
+                S.pdf = await pdfjsLib.getDocument({
+                    url: CFG.url,
+                    standardFontDataUrl: cpdfvSettings.standardFontUrl, 
+                    cMapUrl: cpdfvSettings.cMapUrl,
+                    cMapPacked: true
+                }).promise;
+
                 S.total = S.pdf.numPages;
                 S.page = Math.min(CFG.startPage, S.total);
 
@@ -118,7 +125,7 @@ function boot() {
             }
         }
 
-function renderDocument() {
+        function renderDocument() {
             canvasWrap.classList.add('cpdfv-continuous-wrap');
 
             // Clear old pages (now targeting the new wrappers)
@@ -218,45 +225,70 @@ function renderDocument() {
                                 });
                             }
                         }
-
-                        // GENERATE THE INVISIBLE TEXT LAYER FOR COPYING
-                        page.getTextContent().then(function(txt) {
+                        // GENERATE TEXT LAYER (MEASURE & SQUISH METHOD)
+                        page.getTextContent().then(function(textContent) {
                             task.textLayer.innerHTML = '';
                             
-                            txt.items.forEach(function(item) {
+                            task.textLayer.style.width = cssViewport.width + 'px';
+                            task.textLayer.style.height = cssViewport.height + 'px';
+                            task.textLayer.style.pointerEvents = 'auto'; 
+                            
+                            pageWrap.style.width = cssViewport.width + 'px';
+                            pageWrap.style.height = cssViewport.height + 'px';
+
+                            if (textContent.items.length === 0) {
+                                processQueue();
+                                return;
+                            }
+
+                            // Create an invisible canvas tool to measure font widths
+                            var measureCtx = document.createElement('canvas').getContext('2d');
+
+                            textContent.items.forEach(function(item) {
                                 var span = document.createElement('span');
-                                span.textContent = item.str + ' '; // Added space for natural word separation
+                                var tx = item.transform;
+                                
+                                var fs = Math.sqrt(tx[0] * tx[0] + tx[1] * tx[1]) * S.scale;
+                                var x = tx[4] * S.scale;
+                                var yFromBottom = tx[5] * S.scale; 
+
                                 span.style.position = 'absolute';
+                                span.style.left = x + 'px';
+                                span.style.bottom = yFromBottom + 'px'; 
+                                span.style.fontSize = fs + 'px';
+                                span.style.fontFamily = 'sans-serif'; // Acknowledge the generic fallback
+                                
+                                span.style.transformOrigin = 'left bottom';
+                                span.style.whiteSpace = 'pre'; 
                                 span.style.color = 'transparent';
                                 span.style.cursor = 'text';
-
-                                // Extract scaling and coordinates from PDF transformation matrix
-                                var tx = item.transform;
-                                var fs = Math.sqrt(tx[0] * tx[0] + tx[1] * tx[1]);
-                                var x = tx[4] * S.scale;
-                                // PDF coordinates originate from bottom-left, CSS from top-left
-                                var y = cssViewport.height - (tx[5] * S.scale) - (fs * S.scale);
-
-                                span.style.left = x + 'px';
-                                span.style.top = y + 'px';
-                                span.style.fontSize = (fs * S.scale) + 'px';
-                                span.style.width = (item.width * S.scale) + 'px';
-                                span.style.height = (fs * S.scale * 1.2) + 'px';
-                                span.style.lineHeight = 1;
-                                span.style.whiteSpace = 'pre';
                                 
-                                // Ensure text selection is allowed by the browser
-                                span.style.userSelect = 'text';
-                                span.style.webkitUserSelect = 'text';
+                                // 1. Measure how wide the browser wants to draw this text
+                                measureCtx.font = fs + 'px sans-serif';
+                                var actualWidth = measureCtx.measureText(item.str).width;
+                                
+                                // 2. Calculate the strict width the PDF requires
+                                var targetWidth = item.width * S.scale;
 
+                                // 3. Squish or stretch the generic text to fit the exact PDF constraints
+                                if (actualWidth > 0 && targetWidth > 0) {
+                                    var ratio = targetWidth / actualWidth;
+                                    span.style.transform = 'scaleX(' + ratio + ')';
+                                }
+
+                                span.textContent = item.str;
                                 task.textLayer.appendChild(span);
+
+                                // 4. Append a physical space element to the DOM to fix double-click word selection
+                                task.textLayer.appendChild(document.createTextNode(' '));
                             });
 
-                            processQueue(); // Move to the next page only after text layer finishes
-                        }).catch(function() {
-                            processQueue(); // Failsafe: if text extraction fails, still render the next page
-                        });
+                            processQueue(); 
 
+                        }).catch(function(err) {
+                            console.error('Text Extraction Error:', err);
+                            processQueue(); 
+                        });
                     });
                 });
             }
@@ -833,6 +865,29 @@ function renderDocument() {
 
         // Kick off the initial load
         loadPDF();
+    });
+    // --- COPY EVENT INTERCEPTOR ---
+    // Trims the native trailing space when a user double-clicks to copy a word
+    document.addEventListener('copy', function(e) {
+        var selection = window.getSelection();
+        if (!selection.rangeCount) return;
+
+        // Check if the copied text is coming from inside our custom viewer
+         var container = selection.getRangeAt(0).commonAncestorContainer;
+         var isInsideViewer = container.nodeType === 3 
+            ? container.parentNode.closest('.cpdfv-cont-page') 
+            : (container.closest && container.closest('.cpdfv-cont-page'));
+
+        if (isInsideViewer) {
+            var textToCopy = selection.toString();
+                
+            // If the selected text ends with a trailing space, trim it off
+            if (textToCopy.endsWith(' ')) {
+                // Overwrite the clipboard data with the trimmed text
+                e.clipboardData.setData('text/plain', textToCopy.replace(/ $/,''));
+                e.preventDefault(); // Stop the browser's default copy behavior
+            }
+        }
     });
 }
 

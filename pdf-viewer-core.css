@@ -406,6 +406,58 @@ div.cpdfv-root.fullscreen .cpdfv-viewer-tip {
     color: var(--cpdfv-text);
 }
 
+/* 1. Lock the wrapper dimensions */
+.cpdfv-cont-page {
+    position: relative !important;
+    margin: 0 auto 20px auto !important;
+    padding: 0 !important;
+    border: none !important;
+}
+
+/* 2. Force the canvas to exactly fill the wrapper */
+.cpdfv-cont-page canvas {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* 3. Overlay the text layer perfectly over the canvas */
+.cpdfv-text-layer {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* 4. Strip all WordPress theme typography rules from the text */
+.cpdfv-text-layer span {
+    position: absolute !important;
+    line-height: 0.75 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    letter-spacing: 0px !important;
+    word-spacing: 0px !important;
+    color: transparent !important;
+    transform-origin: left bottom !important;
+}
+
+/* 5. Keep the web font invisible during highlighting */
+.cpdfv-text-layer span::selection {
+    background: rgba(0, 100, 255, 0.3) !important;
+    color: transparent !important;
+}
+.cpdfv-text-layer span::-moz-selection {
+    background: rgba(0, 100, 255, 0.3) !important;
+    color: transparent !important;
+}
+
 /* Hide the tip entirely when in fullscreen mode */
 :fullscreen .cpdfv-viewer-tip,
 :-webkit-full-screen .cpdfv-viewer-tip {
