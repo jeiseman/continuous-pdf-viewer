@@ -37,18 +37,19 @@
 
 /* --- FULLSCREEN FIX --- */
 div.cpdfv-root.fullscreen {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 999999;
-    border-radius: 0;
-    border: none;
-    display: flex;
-    flex-direction: column;
-    background: #e5e5e5;
-    top: 0;
-    left: 0;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 999999 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: #e5e5e5 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* 2. Toolbar Layout */
@@ -304,9 +305,12 @@ div.cpdfv-root.fullscreen .cpdfv-body {
 
 /* 4. Force the continuous wrapper to handle the scrolling */
 div.cpdfv-root.fullscreen .cpdfv-continuous-wrap {
-    height: 100%;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    flex: 1 1 auto !important;
+    height: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 40px !important;
 }
 /* --- DISABLED BUTTON STATES --- */
 div.cpdfv-root .cpdfv-btn:disabled,
@@ -412,15 +416,14 @@ div.cpdfv-root.fullscreen .cpdfv-viewer-tip {
     margin: 0 auto 20px auto !important;
     padding: 0 !important;
     border: none !important;
+    max-width: none !important;
 }
 
 /* 2. Force the canvas to exactly fill the wrapper */
 .cpdfv-cont-page canvas {
     display: block !important;
-    width: 100% !important;
-    height: 100% !important;
     max-width: none !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     padding: 0 !important;
 }
 

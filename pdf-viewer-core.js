@@ -204,6 +204,11 @@ function boot() {
                     task.canvas.style.width = cssViewport.width + 'px';
                     task.canvas.style.height = cssViewport.height + 'px';
 
+                    task.wrap.style.width = cssViewport.width + 'px';
+                    task.wrap.style.height = cssViewport.height + 'px';
+                    task.wrap.style.minWidth = cssViewport.width + 'px'; 
+                    task.wrap.style.maxWidth = 'none';
+
                     page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function() {
                         // Apply Search Highlights
                         if (S.searchQuery && S.searchResults.length) {
@@ -233,8 +238,8 @@ function boot() {
                             task.textLayer.style.height = cssViewport.height + 'px';
                             task.textLayer.style.pointerEvents = 'auto'; 
                             
-                            pageWrap.style.width = cssViewport.width + 'px';
-                            pageWrap.style.height = cssViewport.height + 'px';
+                            // pageWrap.style.width = cssViewport.width + 'px';
+                            // pageWrap.style.height = cssViewport.height + 'px';
 
                             if (textContent.items.length === 0) {
                                 processQueue();
@@ -335,8 +340,27 @@ function boot() {
         async function setZoom(z) {
             if (!S.pdf) return;
 
-            // Apply the zoom safely, restricted ONLY by your absolute min and max configurations
-            S.scale = Math.max(CFG.minZoom, Math.min(z, CFG.maxZoom));
+            // Calculate the exact scale required to fit the current screen width
+            var page = await S.pdf.getPage(S.page);
+            var vp = page.getViewport({ scale: 1 });
+            var maxW = Math.max(120, (canvasWrap ? canvasWrap.clientWidth : 800) - 48);
+            var exactFitScale = maxW / vp.width;
+
+            var minScale = CFG.minZoom;
+            var maxScale = CFG.maxZoom;
+
+            if (window.innerWidth <= 600) {
+                // MOBILE: Set the screen width as the absolute minimum size (floor)
+                // This allows zooming wider, but prevents shrinking narrower than the screen.
+                minScale = Math.max(CFG.minZoom, exactFitScale);
+            } else {
+                // DESKTOP: Set the screen width as the absolute maximum size (ceiling)
+                // This completely prevents zooming wider than the screen.
+                maxScale = Math.min(CFG.maxZoom, exactFitScale);
+            }
+
+            // Apply the zoom safely within the new dynamic limits
+            S.scale = Math.max(minScale, Math.min(z, maxScale));
             S.userZoomed = true;
 
             // Update the percentage display in the UI
@@ -775,32 +799,39 @@ function boot() {
             });
         }
 
-// --- VIEWPORT RESIZE & ROTATION HANDLER ---
+        // --- VIEWPORT RESIZE & ROTATION HANDLER ---
         function handleViewportChange() {
             if (!S.pdf) return;
             
             clearTimeout(window.pvResizeTimer);
-            // 300ms allows the mobile browser time to finish rendering the new dimensions
+            // 300ms allows the browser time to finish rendering the new dimensions
             window.pvResizeTimer = setTimeout(async function() {
                 if (!S.userZoomed) {
-                    // Re-calculate the auto-fits using the finalized physical screen size
                     if (S.fitMode === 'height') {
                         fitHeight();
                     } else {
                         fitWidth();
                     }
                 } else {
-                    // If the user manually zoomed, check if the rotation broke the new screen limits
                     var page = await S.pdf.getPage(1);
                     var vp = page.getViewport({ scale: 1 });
-                    var maxW = (canvasWrap ? canvasWrap.clientWidth : 800) - 48;
-                    var maxAllowedScale = maxW / vp.width;
+                    var maxW = Math.max(120, (canvasWrap ? canvasWrap.clientWidth : 800) - 48);
+                    var exactFitScale = maxW / vp.width;
 
-                    // Force the JS scale down to match the CSS reality if the screen got too narrow
-                    if (S.scale > maxAllowedScale) {
-                        S.scale = maxAllowedScale;
-                        if (zoomDisp) zoomDisp.textContent = Math.round(S.scale * 100) + '%';
-                        renderDocument();
+                    if (window.innerWidth <= 600) {
+                        // MOBILE: If rotating made the screen wider, pull the zoom UP to fill the empty space
+                        if (S.scale < exactFitScale) {
+                            S.scale = exactFitScale;
+                            if (zoomDisp) zoomDisp.textContent = Math.round(S.scale * 100) + '%';
+                            renderDocument();
+                        }
+                    } else {
+                        // DESKTOP: If resizing made the screen narrower, push the zoom DOWN to fit the boundaries
+                        if (S.scale > exactFitScale) {
+                            S.scale = exactFitScale;
+                            if (zoomDisp) zoomDisp.textContent = Math.round(S.scale * 100) + '%';
+                            renderDocument();
+                        }
                     }
                 }
             }, 300);
