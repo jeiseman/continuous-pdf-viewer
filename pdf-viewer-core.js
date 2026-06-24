@@ -47,7 +47,8 @@ function boot() {
             searchQuery: '',
             viewerActivated: !CFG.coverMode,
             fitMode: (CFG.defaultZoom === 'fit_height' ? 'height' : 'width'),
-            scrollObserver: null
+            scrollObserver: null,
+            isManualScrolling: false
         };
 
         // DOM Element Helper
@@ -169,6 +170,7 @@ function boot() {
                 // Update observer to watch the wrapper instead of the canvas directly
                 if (!S.scrollObserver) {
                     S.scrollObserver = new IntersectionObserver(function(entries) {
+                        if (S.isManualScrolling) return;
                         entries.forEach(function(entry) {
                             if (entry.isIntersecting) {
                                 var visiblePageNum = parseInt(entry.target.getAttribute('data-page-num'));
@@ -411,13 +413,26 @@ function boot() {
                 item.appendChild(tc);
                 item.appendChild(label);
                 
+                // Inside your loop where you generate thumbnails:
                 (function(n) {
                     item.addEventListener('click', function() {
                         var targetCanvas = canvasWrap.querySelectorAll('.cpdfv-cont-page')[n - 1]; 
-                        if (targetCanvas) targetCanvas.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        if (targetCanvas) {
+                            S.isManualScrolling = true;
+                            S.page = n;
+            
+                            canvasWrap.scrollTo({ 
+                                top: targetCanvas.offsetTop, 
+                                behavior: 'smooth' 
+                            });
+
+                            clearTimeout(window.pvScrollTimer);
+                            window.pvScrollTimer = setTimeout(function() {
+                                S.isManualScrolling = false;
+                            }, 400);
+                        }
                     });
-                })(i);
-                
+                })(i); // Ensure the variable (usually i) matches your outer loop variable! 
                 thumbsCont.appendChild(item);
             }
         }
@@ -434,14 +449,19 @@ function boot() {
             } else {
                 setZoom(parseFloat(CFG.defaultZoom) || 1.2);
             }
-            
+
             renderThumbs();
 
             // Initial scroll to start page if not page 1
             if (S.page > 1) {
                 setTimeout(function() {
                     var startCanvas = canvasWrap.querySelectorAll('.cpdfv-cont-page')[S.page - 1];
-                    if (startCanvas) startCanvas.scrollIntoView({ block: 'start' });
+                    if (startCanvas) {
+                        // Instantly snap the inner container to the correct page without scrolling the main site
+                        canvasWrap.scrollTo({
+                            top: startCanvas.offsetTop
+                        });
+                    }
                 }, 100);
             }
         }
@@ -581,14 +601,23 @@ function boot() {
                     if (S.page > 1) {
                         var prevCanvas = canvasWrap.querySelectorAll('.cpdfv-cont-page')[S.page - 2];
                         if (prevCanvas) {
+                            // Engage the scroll lock
+                            S.isManualScrolling = true; 
+                            
                             S.page--; 
                             if (pageInput) pageInput.value = S.page; 
-                            
+
                             // Scroll ONLY the internal PDF container, not the whole web page
                             canvasWrap.scrollTo({ 
                                 top: prevCanvas.offsetTop, 
                                 behavior: 'smooth' 
                             });
+
+                            // Release the lock after the smooth scroll animation completes
+                            clearTimeout(window.pvScrollTimer);
+                            window.pvScrollTimer = setTimeout(function() {
+                                S.isManualScrolling = false;
+                            }, 400);
                         }
                     }
                     break;
@@ -596,14 +625,23 @@ function boot() {
                     if (S.page < S.total) {
                         var nextCanvas = canvasWrap.querySelectorAll('.cpdfv-cont-page')[S.page];
                         if (nextCanvas) {
+                            // Engage the scroll lock
+                            S.isManualScrolling = true; 
+                            
                             S.page++; 
                             if (pageInput) pageInput.value = S.page; 
-                            
+
                             // Scroll ONLY the internal PDF container, not the whole web page
                             canvasWrap.scrollTo({ 
                                 top: nextCanvas.offsetTop, 
                                 behavior: 'smooth' 
                             });
+
+                            // Release the lock after the smooth scroll animation completes
+                            clearTimeout(window.pvScrollTimer);
+                            window.pvScrollTimer = setTimeout(function() {
+                                S.isManualScrolling = false;
+                            }, 400);
                         }
                     }
                     break;
@@ -725,14 +763,42 @@ function boot() {
         });
 
         if (pageInput) {
-            pageInput.addEventListener('change', function(e) {
-                var n = parseInt(pageInput.value);
-                if (isNaN(n) || n < 1 || n > S.pdf.numPages) {
-                    pageInput.value = S.page; 
-                    return;
+            // Use 'keydown' instead of 'change' to trap the keystroke immediately
+            pageInput.addEventListener('keydown', function(e) {
+                // Only execute when the Enter key is pressed
+                if (e.key === 'Enter') {
+                    // Stop the browser's native page jump or form submit instantly
+                    e.preventDefault(); 
+
+                    var n = parseInt(pageInput.value);
+                    if (isNaN(n) || n < 1 || n > S.pdf.numPages) {
+                        pageInput.value = S.page; 
+                        pageInput.blur(); // Drop focus to close mobile keyboards
+                        return;
+                    }
+                    
+                    // This passive lookup will now execute silently
+                    var targetCanvas = canvasWrap.querySelectorAll('.cpdfv-cont-page')[n - 1];
+                    
+                    if (targetCanvas) {
+                        S.isManualScrolling = true;
+                        S.page = n; 
+                        
+                        // Force the input to lose focus before scrolling begins
+                        pageInput.blur(); 
+
+                        // Scroll ONLY the internal container
+                        canvasWrap.scrollTo({
+                            top: targetCanvas.offsetTop,
+                            behavior: 'smooth'
+                        });
+
+                        clearTimeout(window.pvScrollTimer);
+                        window.pvScrollTimer = setTimeout(function() {
+                            S.isManualScrolling = false;
+                        }, 400); 
+                    }
                 }
-                var targetCanvas = canvasWrap.querySelectorAll('.cpdfv-cont-page')[n - 1];
-                if (targetCanvas) targetCanvas.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         }
 
