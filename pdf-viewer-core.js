@@ -93,7 +93,9 @@ function boot() {
                     url: CFG.url,
                     standardFontDataUrl: cpdfvSettings.standardFontUrl, 
                     cMapUrl: cpdfvSettings.cMapUrl,
-                    cMapPacked: true
+                    cMapPacked: true,
+                    disableRange: true,  // Stops the rapid-fire chunk requests
+                    disableStream: true  // Stabilizes the file delivery over HTTP/2
                 }).promise;
 
                 S.total = S.pdf.numPages;
@@ -394,36 +396,46 @@ function boot() {
         async function renderThumbs() {
             if (!thumbsCont || !CFG.hasThumbs) return;
             thumbsCont.innerHTML = '';
-            
+
             for (var i = 1; i <= S.total; i++) {
                 var page = await S.pdf.getPage(i);
                 var vp = page.getViewport({ scale: 0.35 });
                 var item = document.createElement('div');
                 item.className = 'cpdfv-thumb-item' + (i === S.page ? ' active' : '');
-                
+
                 var tc = document.createElement('canvas');
                 tc.width = vp.width;
                 tc.height = vp.height;
                 await page.render({ canvasContext: tc.getContext('2d'), viewport: vp }).promise;
-                
+
                 var label = document.createElement('span');
                 label.className = 'cpdfv-thumb-label';
                 label.textContent = i;
-                
+
                 item.appendChild(tc);
                 item.appendChild(label);
-                
-                // Inside your loop where you generate thumbnails:
+
                 (function(n) {
                     item.addEventListener('click', function() {
-                        var targetCanvas = canvasWrap.querySelectorAll('.cpdfv-cont-page')[n - 1]; 
+                        var targetCanvas = canvasWrap.querySelectorAll('.cpdfv-cont-page')[n - 1];
                         if (targetCanvas) {
                             S.isManualScrolling = true;
                             S.page = n;
-            
-                            canvasWrap.scrollTo({ 
-                                top: targetCanvas.offsetTop, 
-                                behavior: 'smooth' 
+
+                            // THE FIX: Forcefully synchronize the UI instantly upon click
+                            if (pageInput) {
+                                pageInput.value = n;
+                            }
+
+                            if (thumbsCont) {
+                                thumbsCont.querySelectorAll('.cpdfv-thumb-item').forEach(function(el, idx) {
+                                    el.classList.toggle('active', idx + 1 === n);
+                                });
+                            }
+
+                            canvasWrap.scrollTo({
+                                top: targetCanvas.offsetTop,
+                                behavior: 'smooth'
                             });
 
                             clearTimeout(window.pvScrollTimer);
@@ -432,7 +444,7 @@ function boot() {
                             }, 400);
                         }
                     });
-                })(i); // Ensure the variable (usually i) matches your outer loop variable! 
+                })(i); 
                 thumbsCont.appendChild(item);
             }
         }
@@ -674,8 +686,25 @@ function boot() {
                     break;
                 case 'print':
                     if (CFG.url) {
-                        var w = window.open(CFG.url);
-                        if (w) setTimeout(function() { w.print(); }, 1000);
+                        var printFrame = document.createElement('iframe');
+                        printFrame.style.display = 'none';
+                        printFrame.src = CFG.url;
+                        document.body.appendChild(printFrame);
+
+                        printFrame.onload = function() {
+                            // Slight delay to ensure the PDF stream is fully initialized in the iframe
+                            setTimeout(function() {
+                                printFrame.contentWindow.focus();
+                                printFrame.contentWindow.print();
+                                
+                                // Clean up the DOM after the print dialog is triggered
+                                setTimeout(function() {
+                                    if (document.body.contains(printFrame)) {
+                                        document.body.removeChild(printFrame);
+                                    }
+                                }, 5000);
+                            }, 500); 
+                        };
                     }
                     break;
                 case 'download':
