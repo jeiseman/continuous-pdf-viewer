@@ -3,7 +3,7 @@ Contributors: @joneiseman
 Tags: pdf, pdf viewer, document viewer, pdf.js, gutenberg
 Requires at least: 5.8
 Tested up to: 7.0
-Stable tag: 2.1.15
+Stable tag: 2.1.16
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,6 +44,10 @@ Advanced Example:
 Note: Generating complex shortcodes is highly recommended via the built-in Shortcode Generator under the Tools menu.
 
 == Changelog ==
+= 2.1.16 =
+* fix switching in in out of fullscreen mode so it stays on the same page
+* fix the highlighted text alignment when doing a search
+
 = 2.1.15 =
 * fix searching so it goes to the correct page when doing the search
 
