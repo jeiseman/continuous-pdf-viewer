@@ -131,7 +131,7 @@ function boot() {
         function renderDocument() {
             canvasWrap.classList.add('cpdfv-continuous-wrap');
 
-            // Clear old pages (now targeting the new wrappers)
+            // Clear old pages
             var oldPages = canvasWrap.querySelectorAll('.cpdfv-cont-page');
             oldPages.forEach(function(c) { c.remove(); });
 
@@ -140,169 +140,204 @@ function boot() {
             var dpr = window.devicePixelRatio || 1;
             var renderQueue = [];
 
-            // 1. Instantly construct the DOM layout
-            for (var i = 1; i <= S.pdf.numPages; i++) {
-                // The wrapper replaces the direct canvas element to hold the text layer
-                var pageWrap = document.createElement('div');
-                pageWrap.className = 'cpdfv-cont-page'; 
-                pageWrap.setAttribute('data-page-num', i);
-                pageWrap.style.position = 'relative';
-                pageWrap.style.width = 'fit-content'; 
-                pageWrap.style.margin = '0 auto 20px auto';
+            // THE SKELETON FIX: Fetch Page 1's dimensions first to create a solid structural layout
+            S.pdf.getPage(1).then(function(referencePage) {
+                var refViewport = referencePage.getViewport({ scale: S.scale });
 
-                var pageCanvas = document.createElement('canvas');
-                pageCanvas.className = 'cpdfv-canvas'; // The actual canvas element
+                // 1. Instantly construct the DOM layout with locked physical dimensions
+                for (var i = 1; i <= S.pdf.numPages; i++) {
+                    var pageWrap = document.createElement('div');
+                    pageWrap.className = 'cpdfv-cont-page'; 
+                    pageWrap.setAttribute('data-page-num', i);
+                    pageWrap.style.position = 'relative';
+                    
+                    pageWrap.style.width = refViewport.width + 'px';
+                    pageWrap.style.height = refViewport.height + 'px';
+                    pageWrap.style.minWidth = refViewport.width + 'px';
+                    pageWrap.style.margin = '0 auto 20px auto';
 
-                var textLayer = document.createElement('div');
-                textLayer.className = 'cpdfv-text-layer';
-                textLayer.style.position = 'absolute';
-                textLayer.style.top = '0';
-                textLayer.style.left = '0';
-                textLayer.style.width = '100%';
-                textLayer.style.height = '100%';
-                textLayer.style.overflow = 'hidden';
-                textLayer.style.textAlign = 'left';
+                    var pageCanvas = document.createElement('canvas');
+                    pageCanvas.className = 'cpdfv-canvas'; 
 
-                pageWrap.appendChild(pageCanvas);
-                pageWrap.appendChild(textLayer);
-                canvasWrap.appendChild(pageWrap);
+                    var textLayer = document.createElement('div');
+                    textLayer.className = 'cpdfv-text-layer';
+                    textLayer.style.position = 'absolute';
+                    textLayer.style.top = '0';
+                    textLayer.style.left = '0';
+                    textLayer.style.width = '100%';
+                    textLayer.style.height = '100%';
+                    textLayer.style.overflow = 'hidden';
+                    textLayer.style.textAlign = 'left';
 
-                renderQueue.push({ pageNum: i, canvas: pageCanvas, textLayer: textLayer, wrap: pageWrap });
+                    pageWrap.appendChild(pageCanvas);
+                    pageWrap.appendChild(textLayer);
+                    canvasWrap.appendChild(pageWrap);
 
-                // Update observer to watch the wrapper instead of the canvas directly
-                if (!S.scrollObserver) {
-                    S.scrollObserver = new IntersectionObserver(function(entries) {
-                        if (S.isManualScrolling) return;
-                        entries.forEach(function(entry) {
-                            if (entry.isIntersecting) {
-                                var visiblePageNum = parseInt(entry.target.getAttribute('data-page-num'));
-                                S.page = visiblePageNum;
-                                if (pageInput) pageInput.value = visiblePageNum;
-                                if (thumbsCont) {
-                                    thumbsCont.querySelectorAll('.cpdfv-thumb-item').forEach(function(el, idx) {
-                                        el.classList.toggle('active', idx + 1 === visiblePageNum);
-                                    });
+                    renderQueue.push({ pageNum: i, canvas: pageCanvas, textLayer: textLayer, wrap: pageWrap });
+
+                    if (!S.scrollObserver) {
+                        S.scrollObserver = new IntersectionObserver(function(entries) {
+                            if (S.isManualScrolling) return;
+                            entries.forEach(function(entry) {
+                                if (entry.isIntersecting) {
+                                    var visiblePageNum = parseInt(entry.target.getAttribute('data-page-num'));
+                                    S.page = visiblePageNum;
+                                    if (pageInput) pageInput.value = visiblePageNum;
+                                    if (thumbsCont) {
+                                        thumbsCont.querySelectorAll('.cpdfv-thumb-item').forEach(function(el, idx) {
+                                            el.classList.toggle('active', idx + 1 === visiblePageNum);
+                                        });
+                                    }
                                 }
-                            }
-                        });
-                    }, { root: canvasWrap, rootMargin: '-40% 0px -40% 0px', threshold: 0 });
-                }
-                S.scrollObserver.observe(pageWrap);
-            }
-
-            // 2. Process rendering sequentially
-            function processQueue() {
-                if (renderQueue.length === 0) {
-                    if (loader) loader.style.display = 'none';
-                    return;
-                }
-                var task = renderQueue.shift();
-
-                S.pdf.getPage(task.pageNum).then(function(page) {
-                    var viewport = page.getViewport({ scale: S.scale * dpr });
-                    var cssViewport = page.getViewport({ scale: S.scale }); // Normal scale for DOM positioning
-                    var ctx = task.canvas.getContext('2d');
-
-                    task.canvas.height = viewport.height;
-                    task.canvas.width = viewport.width;
-                    task.canvas.style.width = cssViewport.width + 'px';
-                    task.canvas.style.height = cssViewport.height + 'px';
-
-                    task.wrap.style.width = cssViewport.width + 'px';
-                    task.wrap.style.height = cssViewport.height + 'px';
-                    task.wrap.style.minWidth = cssViewport.width + 'px'; 
-                    task.wrap.style.maxWidth = 'none';
-
-                    page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function() {
-                        // Apply Search Highlights
-                        if (S.searchQuery && S.searchResults.length) {
-                            var activeRes = S.searchIdx >= 0 ? S.searchResults[S.searchIdx] : null;
-                            var pm = S.searchResults.filter(function(r) { return r.pageNum === task.pageNum; });
-                            if (pm.length) {
-                                var sc = S.scale * dpr;
-                                pm.forEach(function(m) {
-                                    var ia = activeRes && activeRes === m;
-                                    ctx.save();
-                                    ctx.fillStyle = ia ? 'rgba(255,160,0,0.45)' : 'rgba(255,220,0,0.3)';
-                                    ctx.strokeStyle = ia ? 'rgba(255,120,0,0.8)' : 'rgba(200,180,0,0.5)';
-                                    ctx.lineWidth = ia ? 2 : 1;
-                                    m.rects.forEach(function(r) {
-                                        ctx.fillRect(r.x * sc, r.y * sc, r.w * sc, r.h * sc);
-                                        ctx.strokeRect(r.x * sc, r.y * sc, r.w * sc, r.h * sc);
-                                    });
-                                    ctx.restore();
-                                });
-                            }
-                        }
-                        // GENERATE TEXT LAYER (MEASURE & SQUISH METHOD)
-                        page.getTextContent().then(function(textContent) {
-                            task.textLayer.innerHTML = '';
-                            
-                            task.textLayer.style.width = cssViewport.width + 'px';
-                            task.textLayer.style.height = cssViewport.height + 'px';
-                            task.textLayer.style.pointerEvents = 'auto'; 
-                            
-                            // pageWrap.style.width = cssViewport.width + 'px';
-                            // pageWrap.style.height = cssViewport.height + 'px';
-
-                            if (textContent.items.length === 0) {
-                                processQueue();
-                                return;
-                            }
-
-                            // Create an invisible canvas tool to measure font widths
-                            var measureCtx = document.createElement('canvas').getContext('2d');
-
-                            textContent.items.forEach(function(item) {
-                                var span = document.createElement('span');
-                                var tx = item.transform;
-                                
-                                var fs = Math.sqrt(tx[0] * tx[0] + tx[1] * tx[1]) * S.scale;
-                                var x = tx[4] * S.scale;
-                                var yFromBottom = tx[5] * S.scale; 
-
-                                span.style.position = 'absolute';
-                                span.style.left = x + 'px';
-                                span.style.bottom = yFromBottom + 'px'; 
-                                span.style.fontSize = fs + 'px';
-                                span.style.fontFamily = 'sans-serif'; // Acknowledge the generic fallback
-                                
-                                span.style.transformOrigin = 'left bottom';
-                                span.style.whiteSpace = 'pre'; 
-                                span.style.color = 'transparent';
-                                span.style.cursor = 'text';
-                                
-                                // 1. Measure how wide the browser wants to draw this text
-                                measureCtx.font = fs + 'px sans-serif';
-                                var actualWidth = measureCtx.measureText(item.str).width;
-                                
-                                // 2. Calculate the strict width the PDF requires
-                                var targetWidth = item.width * S.scale;
-
-                                // 3. Squish or stretch the generic text to fit the exact PDF constraints
-                                if (actualWidth > 0 && targetWidth > 0) {
-                                    var ratio = targetWidth / actualWidth;
-                                    span.style.transform = 'scaleX(' + ratio + ')';
-                                }
-
-                                span.textContent = item.str;
-                                task.textLayer.appendChild(span);
-
-                                // 4. Append a physical space element to the DOM to fix double-click word selection
-                                task.textLayer.appendChild(document.createTextNode(' '));
                             });
+                        }, { root: canvasWrap, rootMargin: '-40% 0px -40% 0px', threshold: 0 });
+                    }
+                    S.scrollObserver.observe(pageWrap);
+                }
 
-                            processQueue(); 
+                // THE FULLSCREEN JUMP HOOK
+                if (S.pendingScrollPage) {
+                    var targetCanvas = canvasWrap.querySelectorAll('.cpdfv-cont-page')[S.pendingScrollPage - 1];
+                    if (targetCanvas) {
+                        canvasWrap.scrollTo({ top: targetCanvas.offsetTop });
+                    }
+                    S.pendingScrollPage = null; 
+                }
 
-                        }).catch(function(err) {
-                            console.error('Text Extraction Error:', err);
-                            processQueue(); 
+                // THE INITIAL SEARCH JUMP HOOK
+                if (S.pendingSearchScroll) {
+                    var searchCanvas = canvasWrap.querySelectorAll('.cpdfv-cont-page')[S.pendingSearchScroll.pageNum - 1];
+                    if (searchCanvas) {
+                        S.page = S.pendingSearchScroll.pageNum;
+                        var exactY = searchCanvas.offsetTop + (S.pendingSearchScroll.y * S.scale) - (canvasWrap.clientHeight / 2);
+                        
+                        canvasWrap.scrollTo({ top: Math.max(0, exactY), behavior: 'smooth' });
+                        
+                        clearTimeout(window.pvScrollTimer);
+                        window.pvScrollTimer = setTimeout(function() {
+                            S.isManualScrolling = false;
+                        }, 400);
+                    }
+                    S.pendingSearchScroll = null; // Clear the hook
+                }
+
+                // 2. Process rendering sequentially
+                function processQueue() {
+                    if (renderQueue.length === 0) {
+                        if (loader) loader.style.display = 'none';
+                        return;
+                    }
+                    var task = renderQueue.shift();
+
+                    S.pdf.getPage(task.pageNum).then(function(page) {
+                        var viewport = page.getViewport({ scale: S.scale * dpr });
+                        var cssViewport = page.getViewport({ scale: S.scale }); 
+                        var ctx = task.canvas.getContext('2d');
+
+                        task.canvas.height = viewport.height;
+                        task.canvas.width = viewport.width;
+                        task.canvas.style.width = cssViewport.width + 'px';
+                        task.canvas.style.height = cssViewport.height + 'px';
+
+                        task.wrap.style.width = cssViewport.width + 'px';
+                        task.wrap.style.height = cssViewport.height + 'px';
+                        task.wrap.style.minWidth = cssViewport.width + 'px'; 
+                        task.wrap.style.maxWidth = 'none';
+
+                        page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function() {
+                            
+                            // GENERATE TEXT LAYER & INJECT <mark> HIGHLIGHTS
+                            page.getTextContent().then(function(textContent) {
+                                task.textLayer.innerHTML = '';
+                                task.textLayer.style.width = cssViewport.width + 'px';
+                                task.textLayer.style.height = cssViewport.height + 'px';
+                                task.textLayer.style.pointerEvents = 'auto'; 
+                                
+                                if (textContent.items.length === 0) {
+                                    processQueue();
+                                    return;
+                                }
+
+                                var measureCtx = document.createElement('canvas').getContext('2d');
+
+                                textContent.items.forEach(function(item, itemIndex) {
+                                    var span = document.createElement('span');
+                                    var tx = item.transform;
+                                    var fs = Math.sqrt(tx[0] * tx[0] + tx[1] * tx[1]) * S.scale;
+                                    var x = tx[4] * S.scale;
+                                    var yFromBottom = tx[5] * S.scale; 
+
+                                    span.style.position = 'absolute';
+                                    span.style.left = x + 'px';
+                                    span.style.bottom = yFromBottom + 'px'; 
+                                    span.style.fontSize = fs + 'px';
+                                    span.style.fontFamily = 'sans-serif'; 
+                                    span.style.transformOrigin = 'left bottom';
+                                    span.style.whiteSpace = 'pre'; 
+                                    span.style.color = 'transparent';
+                                    span.style.cursor = 'text';
+                                    
+                                    measureCtx.font = fs + 'px sans-serif';
+                                    var actualWidth = measureCtx.measureText(item.str).width;
+                                    var targetWidth = item.width * S.scale;
+
+                                    if (actualWidth > 0 && targetWidth > 0) {
+                                        var ratio = targetWidth / actualWidth;
+                                        span.style.transform = 'scaleX(' + ratio + ')';
+                                    }
+
+                                    // HTML <mark> HIGHLIGHTING LOGIC
+                                    var itemMatches = [];
+                                    if (S.searchQuery && S.searchResults.length) {
+                                        itemMatches = S.searchResults.filter(function(m) {
+                                            return m.pageNum === task.pageNum && m.itemIdx === itemIndex;
+                                        });
+                                    }
+
+                                    if (itemMatches.length > 0) {
+                                        var lastIdx = 0;
+                                        var activeRes = S.searchIdx >= 0 ? S.searchResults[S.searchIdx] : null;
+
+                                        itemMatches.forEach(function(m) {
+                                            var isActive = (activeRes === m);
+                                            
+                                            var beforeText = item.str.substring(lastIdx, m.charIdx);
+                                            if (beforeText) span.appendChild(document.createTextNode(beforeText));
+
+                                            var mark = document.createElement('mark');
+                                            mark.textContent = item.str.substring(m.charIdx, m.charIdx + m.charLen);
+                                            mark.style.color = 'transparent';
+                                            mark.style.backgroundColor = isActive ? 'rgba(255,160,0,0.45)' : 'rgba(255,220,0,0.3)';
+                                            mark.className = 'cpdfv-search-mark';
+                                            mark.setAttribute('data-search-idx', S.searchResults.indexOf(m));
+                                            
+                                            span.appendChild(mark);
+                                            lastIdx = m.charIdx + m.charLen;
+                                        });
+
+                                        var afterText = item.str.substring(lastIdx);
+                                        if (afterText) span.appendChild(document.createTextNode(afterText));
+                                        
+                                    } else {
+                                        span.textContent = item.str;
+                                    }
+
+                                    task.textLayer.appendChild(span);
+                                    task.textLayer.appendChild(document.createTextNode(' '));
+                                });
+
+                                processQueue(); 
+
+                            }).catch(function(err) {
+                                console.error('Text Extraction Error:', err);
+                                processQueue(); 
+                            });
                         });
                     });
-                });
-            }
+                }
 
-            processQueue();
+                processQueue();
+            }); 
         }
 
         async function fitWidth() {
@@ -479,7 +514,7 @@ function boot() {
         }
 
         // --- SEARCH FUNCTIONS ---
-
+        //
         async function doSearch(q) {
             S.searchQuery = q.toLowerCase();
             S.searchResults = [];
@@ -497,40 +532,51 @@ function boot() {
                 var txt = await page.getTextContent();
                 var vp = page.getViewport({ scale: 1 });
 
-                txt.items.forEach(function(item) {
+                txt.items.forEach(function(item, itemIndex) {
                     var str = item.str.toLowerCase();
                     var idx = 0;
+                    
                     while ((idx = str.indexOf(q, idx)) !== -1) {
                         var tx = item.transform;
-                        var x = tx[4], y = tx[5];
+                        var y = tx[5];
                         var fs = Math.sqrt(tx[0] * tx[0] + tx[1] * tx[1]);
-                        var cw = item.width / item.str.length;
                         
                         S.searchResults.push({
                             pageNum: i,
-                            rects: [{ x: x + idx * cw, y: vp.height - y - fs * 0.85, w: q.length * cw, h: fs * 1.2 }]
+                            itemIdx: itemIndex, // Track the exact DOM span
+                            charIdx: idx,
+                            charLen: q.length,
+                            rects: [{ y: vp.height - y - fs * 0.85 }] // Keep Y for scrolling
                         });
                         idx += q.length;
                     }
                 });
             }
+
             if (S.searchResults.length) {
+                // Sort by Page, then Y-axis, then item index
+                S.searchResults.sort(function(a, b) {
+                    if (a.pageNum !== b.pageNum) return a.pageNum - b.pageNum;
+                    if (a.rects[0].y !== b.rects[0].y) return a.rects[0].y - b.rects[0].y;
+                    return a.itemIdx - b.itemIdx;
+                });
+
                 S.searchIdx = 0;
-                renderDocument(); // Redraws to show highlights
+                var firstResult = S.searchResults[0];
+                var firstRect = firstResult.rects[0];
 
-                // Immediately scroll to the exact pixel location of the first result
-                var targetCanvas = canvasWrap.querySelectorAll('.cpdfv-cont-page')[S.searchResults[0].pageNum - 1];
-                var firstRect = S.searchResults[0].rects[0];
+                // THE FIX: Set a precise memory hook BEFORE calling renderDocument
+                S.pendingSearchScroll = {
+                    pageNum: firstResult.pageNum,
+                    y: firstRect.y
+                };
+                S.isManualScrolling = true;
 
-                if (targetCanvas && firstRect) {
-                    // Use a slight timeout to ensure the DOM is ready after the redraw
-                    setTimeout(function() {
-                        var exactY = targetCanvas.offsetTop + (firstRect.y * S.scale) - (canvasWrap.clientHeight / 2);
-                        canvasWrap.scrollTo({ top: Math.max(0, exactY), behavior: 'smooth' });
-                    }, 50);
-                }
+                // Tell the document to rebuild. It will handle the scroll automatically.
+                renderDocument(); 
+                
             } else {
-                renderDocument(); // Redraws to clear highlights
+                renderDocument();
             }
             updateSearchInfo();
         }
