@@ -169,8 +169,22 @@ function boot() {
                     textLayer.style.overflow = 'hidden';
                     textLayer.style.textAlign = 'left';
 
+                    var annotLayer = document.createElement('div');
+                    annotLayer.className = 'cpdfv-annot-layer';
+                    annotLayer.style.position = 'absolute';
+                    annotLayer.style.top = '0';
+                    annotLayer.style.left = '0';
+                    annotLayer.style.width = '100%';
+                    annotLayer.style.height = '100%';
+                    annotLayer.style.pointerEvents = 'none'; // Lets clicks pass through to text where there are no links
+
                     pageWrap.appendChild(pageCanvas);
                     pageWrap.appendChild(textLayer);
+                    pageWrap.appendChild(annotLayer);
+
+                    // Update the queue push to include the annotLayer
+                    renderQueue.push({ pageNum: i, canvas: pageCanvas, textLayer: textLayer, annotLayer: annotLayer, wrap: pageWrap });
+
                     canvasWrap.appendChild(pageWrap);
 
                     renderQueue.push({ pageNum: i, canvas: pageCanvas, textLayer: textLayer, wrap: pageWrap });
@@ -245,6 +259,31 @@ function boot() {
                         task.wrap.style.maxWidth = 'none';
 
                         page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function() {
+                            // ADD THIS: Extract annotations and build clickable links
+                            page.getAnnotations().then(function(annotations) {
+                                annotations.forEach(function(annot) {
+                                    // Only process hyperlink annotations that contain URLs
+                                    if (annot.subtype === 'Link' && annot.url) {
+                                        var a = document.createElement('a');
+                                        a.href = annot.url;
+                                        a.target = '_blank';
+                                        a.rel = 'noopener noreferrer';
+                                        a.style.position = 'absolute';
+                                        a.style.pointerEvents = 'auto'; // Re-enable clicks for the actual link area
+                                        a.style.cursor = 'pointer';
+
+                                        // Convert the PDF's internal coordinates to match our current browser zoom scale
+                                        var rect = viewport.convertToViewportRectangle(annot.rect);
+                                    
+                                        a.style.left = Math.min(rect[0], rect[2]) + 'px';
+                                        a.style.top = Math.min(rect[1], rect[3]) + 'px';
+                                        a.style.width = Math.abs(rect[2] - rect[0]) + 'px';
+                                        a.style.height = Math.abs(rect[3] - rect[1]) + 'px';
+
+                                        task.annotLayer.appendChild(a);
+                                    }
+                                });
+                            });
                             
                             // GENERATE TEXT LAYER & INJECT <mark> HIGHLIGHTS
                             page.getTextContent().then(function(textContent) {
