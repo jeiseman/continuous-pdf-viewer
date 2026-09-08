@@ -103,14 +103,21 @@ function boot() {
 
                 if (pageTotal) pageTotal.textContent = '/ ' + S.total;
                 var sp = el('statusPages');
-                if (sp) sp.textContent = S.total + ' pages';
+                if (sp) sp.textContent = S.total + ' ' + cpdfvSettings.i18n.pages;
                 var si = el('statusInfo');
-                if (si) si.textContent = CFG.title || 'Loaded';
+                if (si) si.textContent = CFG.title || cpdfvSettings.i18n.loaded;
 
                 if (CFG.coverMode && !S.viewerActivated) {
                     if (loader) loader.classList.remove('active');
                     if (CFG.hasCoverImage) {
-                        if (coverMeta) coverMeta.textContent = S.total + ' pages ready to open';
+                        if (coverMeta) {
+                            coverMeta.textContent = S.total + ' pages ready to open';
+                            var metaText = S.total === 1 
+                                ? cpdfvSettings.i18n.pagesReadySingle 
+                                : cpdfvSettings.i18n.pagesReadyPlural.replace('%d', S.total);
+                                
+                            coverMeta.textContent = metaText;
+                        }
                     } else {
                         await renderCover();
                     }
@@ -182,12 +189,9 @@ function boot() {
                     pageWrap.appendChild(textLayer);
                     pageWrap.appendChild(annotLayer);
 
-                    // Update the queue push to include the annotLayer
-                    renderQueue.push({ pageNum: i, canvas: pageCanvas, textLayer: textLayer, annotLayer: annotLayer, wrap: pageWrap });
-
                     canvasWrap.appendChild(pageWrap);
 
-                    renderQueue.push({ pageNum: i, canvas: pageCanvas, textLayer: textLayer, wrap: pageWrap });
+                    renderQueue.push({ pageNum: i, canvas: pageCanvas, textLayer: textLayer, annotLayer: annotLayer, wrap: pageWrap });
 
                     if (!S.scrollObserver) {
                         S.scrollObserver = new IntersectionObserver(function(entries) {
@@ -259,28 +263,81 @@ function boot() {
                         task.wrap.style.maxWidth = 'none';
 
                         page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function() {
-                            // ADD THIS: Extract annotations and build clickable links
+                            
+                            // Extract annotations and safely build clickable links
                             page.getAnnotations().then(function(annotations) {
                                 annotations.forEach(function(annot) {
-                                    // Only process hyperlink annotations that contain URLs
-                                    if (annot.subtype === 'Link' && annot.url) {
+                                    if (annot.subtype === 'Link') {
                                         var a = document.createElement('a');
-                                        a.href = annot.url;
-                                        a.target = '_blank';
-                                        a.rel = 'noopener noreferrer';
                                         a.style.position = 'absolute';
-                                        a.style.pointerEvents = 'auto'; // Re-enable clicks for the actual link area
+                                        a.style.pointerEvents = 'auto';
                                         a.style.cursor = 'pointer';
 
-                                        // Convert the PDF's internal coordinates to match our current browser zoom scale
                                         var rect = viewport.convertToViewportRectangle(annot.rect);
-                                    
                                         a.style.left = Math.min(rect[0], rect[2]) + 'px';
                                         a.style.top = Math.min(rect[1], rect[3]) + 'px';
                                         a.style.width = Math.abs(rect[2] - rect[0]) + 'px';
                                         a.style.height = Math.abs(rect[3] - rect[1]) + 'px';
 
-                                        task.annotLayer.appendChild(a);
+                                        if (annot.url) {
+                                            try {
+                                                var parsedUrl = new URL(annot.url);
+                                                // Only allow safe HTTP/HTTPS protocols
+                                                if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+                                                    a.href = parsedUrl.href;
+                                                    a.target = '_blank';
+                                                    a.rel = 'noopener noreferrer';
+                                                    task.annotLayer.appendChild(a);
+                                                }
+                                            } catch (e) {
+                                                console.warn('Blocked invalid PDF link format.');
+                                            }
+                                        } else if (annot.dest) {
+                                            // Handle internal document page jumps
+                                            a.href = '#';
+                                            a.addEventListener('click', function(e) {
+                                                e.preventDefault();
+                                                var dest = annot.dest;
+                                                var getDestPromise = typeof dest === 'string' ? S.pdf.getDestination(dest) : Promise.resolve(dest);
+
+                                                getDestPromise.then(function(destArray) {
+                                                    if (!destArray) return;
+                                                    S.pdf.getPageIndex(destArray[0]).then(function(pageIndex) {
+                                                        var targetPageNum = pageIndex + 1;
+                                                        var targetCanvas = canvasWrap.querySelectorAll('.cpdfv-cont-page')[targetPageNum - 1];
+                                                        
+                                                        if (targetCanvas) {
+                                                            S.isManualScrolling = true;
+                                                            S.page = targetPageNum;
+                                                            if (pageInput) pageInput.value = targetPageNum;
+                                                            if (thumbsCont) {
+                                                                thumbsCont.querySelectorAll('.cpdfv-thumb-item').forEach(function(el, idx) {
+                                                                    el.classList.toggle('active', idx + 1 === targetPageNum);
+                                                                });
+                                                            }
+
+                                                            S.pdf.getPage(targetPageNum).then(function(p) {
+                                                                var vp = p.getViewport({ scale: S.scale });
+                                                                var exactY = targetCanvas.offsetTop;
+                                                                
+                                                                if (destArray[1] && destArray[1].name === 'XYZ' && typeof destArray[3] === 'number') {
+                                                                    var yPdf = destArray[3];
+                                                                    exactY += (vp.height - (yPdf * S.scale)) - (canvasWrap.clientHeight / 2);
+                                                                }
+
+                                                                canvasWrap.scrollTo({ top: Math.max(0, exactY), behavior: 'smooth' });
+                                                            });
+
+                                                            clearTimeout(window.pvScrollTimer);
+                                                            window.pvScrollTimer = setTimeout(function() {
+                                                                S.isManualScrolling = false;
+                                                            }, 400);
+                                                        }
+                                                    });
+                                                });
+                                            });
+                                            task.annotLayer.appendChild(a);
+                                        }
                                     }
                                 });
                             });
@@ -564,7 +621,7 @@ function boot() {
                 return;
             }
 
-            if (searchInfo) searchInfo.textContent = 'Searching...';
+            if (searchInfo) searchInfo.textContent =   cpdfvSettings.i18n.searching;
 
             for (var i = 1; i <= S.total; i++) {
                 var page = await S.pdf.getPage(i);
@@ -628,7 +685,7 @@ function boot() {
             var nextBtn = searchBar ? searchBar.querySelector('[data-action="searchNext"]') : null;
 
             if (!S.searchResults.length && S.searchQuery) {
-                searchInfo.textContent = 'No results';
+                searchInfo.textContent = cpdfvSettings.i18n.noResults;
                 if (prevBtn) prevBtn.disabled = true;
                 if (nextBtn) nextBtn.disabled = true;
             } else if (S.searchResults.length) {

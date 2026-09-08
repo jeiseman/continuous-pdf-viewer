@@ -3,9 +3,11 @@
  * Plugin Name: Continuous PDF Viewer
  * Plugin URI:  https://mafw.org
  * Description: A high-performance PDF viewer based on PDF.js with a shortcode generator and Gutenberg support.
- * Version:     2.1.19
+ * Version:     2.1.20
  * Author:      Jonathan A Eiseman
  * License:     GPL2
+ * Text Domain: continuous-pdf-viewer
+ * Domain Path: /languages
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -23,18 +25,18 @@ function cpdfv_render_shortcode( $atts ) {
         'cover_mode'         => false,
         'cover_image'        => '',
         'cover_overlay'      => 'yes',
-        'cover_overlay_text' => 'Click to Open',
+        'cover_overlay_text' => __( 'Click to Open', 'continuous-pdf-viewer' ),
         'cover_button'       => 'yes',
-        'cover_button_text'  => 'Open PDF',
-        'cover_hint'         => 'Click to view document',
+        'cover_button_text'  => __( 'Open PDF', 'continuous-pdf-viewer' ),
+        'cover_hint'         => __( 'Click to view document', 'continuous-pdf-viewer' ),
         'title'              => '',
         'subtitle'           => '',
         'brand'              => '',
-        'loading_text'       => 'Loading Document...',
-        'error_text'         => 'Unable to load PDF. Please try again.',
+        'loading_text'       => __( 'Loading Document...', 'continuous-pdf-viewer' ),
+        'error_text'         => __( 'Unable to load PDF. Please try again.', 'continuous-pdf-viewer' ),
         'theme'              => 'light',
         'start_page'         => 1,
-        'default_zoom'       => 'auto',
+        'default_zoom'       => __( 'auto', 'continuous-pdf-viewer' ),
         'min_zoom'           => 0.1,
         'max_zoom'           => 10,
         'zoom_step'          => 0.1,
@@ -52,12 +54,60 @@ function cpdfv_render_shortcode( $atts ) {
         'sidebar_open'       => false,
     ), $atts );
 
-    // Extract for easier use, but remember to escape during output
-    extract( $a );
+    // Helper: Only allow numbers and letters/percentages for dimensions[cite: 1]
+    $sanitize_dim = function( $dim ) {
+        return preg_replace( '/[^a-zA-Z0-9%]/', '', $dim );
+    };
+
+    // 1. URLs
+    $url         = esc_url( $a['url'] );
+    $cover_image = esc_url( $a['cover_image'] );
+
+    // 2. Dimensions
+    $height        = $sanitize_dim( $a['height'] );
+    $tablet_height = $sanitize_dim( $a['tablet_height'] );
+    $mobile_height = $sanitize_dim( $a['mobile_height'] );
+
+    // 3. Numbers (Ints and Floats)
+    $start_page = absint( $a['start_page'] );
+    $min_zoom   = floatval( $a['min_zoom'] );
+    $max_zoom   = floatval( $a['max_zoom'] );
+    $zoom_step  = floatval( $a['zoom_step'] );
+
+    // 4. CSS Classes / Keywords
+    $theme        = sanitize_key( $a['theme'] );
+    $default_zoom = sanitize_text_field( $a['default_zoom'] );
+
+    // 5. Text Strings
+    $cover_overlay      = sanitize_text_field( $a['cover_overlay'] );
+    $cover_overlay_text = sanitize_text_field( $a['cover_overlay_text'] );
+    $cover_button       = sanitize_text_field( $a['cover_button'] );
+    $cover_button_text  = sanitize_text_field( $a['cover_button_text'] );
+    $cover_hint         = sanitize_text_field( $a['cover_hint'] );
+    $title              = sanitize_text_field( $a['title'] );
+    $subtitle           = sanitize_text_field( $a['subtitle'] );
+    $brand              = sanitize_text_field( $a['brand'] );
+    $loading_text       = sanitize_text_field( $a['loading_text'] );
+    $error_text         = sanitize_text_field( $a['error_text'] );
+
+    // 6. Booleans
+    $cover_mode       = filter_var( $a['cover_mode'], FILTER_VALIDATE_BOOLEAN );
+    $f_thumbnails     = filter_var( $a['f_thumbnails'], FILTER_VALIDATE_BOOLEAN );
+    $f_page_nav       = filter_var( $a['f_page_nav'], FILTER_VALIDATE_BOOLEAN );
+    $f_zoom           = filter_var( $a['f_zoom'], FILTER_VALIDATE_BOOLEAN );
+    $f_fit_width_btn  = filter_var( $a['f_fit_width_btn'], FILTER_VALIDATE_BOOLEAN );
+    $f_fit_height_btn = filter_var( $a['f_fit_height_btn'], FILTER_VALIDATE_BOOLEAN );
+    $f_search         = filter_var( $a['f_search'], FILTER_VALIDATE_BOOLEAN );
+    $f_theme_toggle   = filter_var( $a['f_theme_toggle'], FILTER_VALIDATE_BOOLEAN );
+    $f_print          = filter_var( $a['f_print'], FILTER_VALIDATE_BOOLEAN );
+    $f_download       = filter_var( $a['f_download'], FILTER_VALIDATE_BOOLEAN );
+    $f_fullscreen     = filter_var( $a['f_fullscreen'], FILTER_VALIDATE_BOOLEAN );
+    $f_status_bar     = filter_var( $a['f_status_bar'], FILTER_VALIDATE_BOOLEAN );
+    $sidebar_open     = filter_var( $a['sidebar_open'], FILTER_VALIDATE_BOOLEAN );
 
     $uid = 'cpdfv-' . wp_generate_password( 8, false );
     
-    // Visibility classes: if a feature is false, we add a 'cpdfv-hidden' class
+    // Visibility classes: if a feature is false, we add a 'cpdfv-hidden' class[cite: 1]
     $v_thumbnails      = $f_thumbnails ? '' : ' cpdfv-hidden';
     $v_page_nav        = $f_page_nav ? '' : ' cpdfv-hidden';
     $v_zoom            = $f_zoom ? '' : ' cpdfv-hidden';
@@ -71,14 +121,14 @@ function cpdfv_render_shortcode( $atts ) {
     $v_status_bar      = $f_status_bar ? '' : ' cpdfv-hidden';
     $sb_vis            = $f_thumbnails ? '' : ' cpdfv-hidden';
 
-    // Fetch the global option (with the default fallback)
+    // Fetch the global option (with the default fallback)[cite: 1]
     $pro_tip_text = get_option('cpdfv_global_pro_tip', 'Pro-Tip: Click <a href="#" class="cpdfv-tip-link">Full Screen</a> for the best viewing experience.');
 
     $custom_css = "
-        #" . esc_html( $uid ) . " {
-            --cpdfv-height: " . esc_attr( $height ) . ";
-            --cpdfv-tablet-height: " . esc_attr( $tablet_height ) . ";
-            --cpdfv-mobile-height: " . esc_attr( $mobile_height ) . ";
+        #" . esc_attr( $uid ) . " {
+            --cpdfv-height: " . $height . ";
+            --cpdfv-tablet-height: " . $tablet_height . ";
+            --cpdfv-mobile-height: " . $mobile_height . ";
         }
     ";
 
@@ -224,7 +274,7 @@ function cpdfv_render_shortcode( $atts ) {
             <div class="cpdfv-viewer-tip">
                 <span class="cpdfv-tip-icon">💡</span> 
                 <span class="cpdfv-tip-text">
-                    Pro-Tip: Click <a href="#" class="cpdfv-tip-link">Full Screen</a> for the best viewing experience.
+                    <?php echo wp_kses_post( $pro_tip_text ); ?>
                 </span>
             </div>
         </div>
@@ -323,7 +373,15 @@ function cpdfv_frontend_assets() {
     wp_localize_script( 'cpdfv-core-js', 'cpdfvSettings', array(
         'workerUrl'       => plugins_url( 'lib/pdfjs/pdf.worker.mjs', __FILE__ ),
         'standardFontUrl' => plugins_url( 'lib/pdfjs/standard_fonts/', __FILE__ ),
-        'cMapUrl'         => plugins_url( 'lib/pdfjs/cmaps/', __FILE__ )
+        'cMapUrl'         => plugins_url( 'lib/pdfjs/cmaps/', __FILE__ ),
+        'i18n'            => array(
+            'searching' => __( 'Searching...', 'continuous-pdf-viewer' ),
+            'noResults' => __( 'No results', 'continuous-pdf-viewer' ),
+            'loaded'    => __( 'Loaded', 'continuous-pdf-viewer' ),
+            'pages'     => __( 'pages', 'continuous-pdf-viewer' ),
+            'pagesReadySingle' => __( '1 page ready to open', 'continuous-pdf-viewer' ),
+            'pagesReadyPlural' => __( '%d pages ready to open', 'continuous-pdf-viewer' )
+        )
     ));
 }
 
@@ -359,11 +417,24 @@ function cpdfv_admin_menu() {
 add_action( 'admin_enqueue_scripts', 'cpdfv_admin_assets' );
 function cpdfv_admin_assets( $hook ) {
     if ( $hook !== 'tools_page_cpdfv-generator' ) return;
-    wp_enqueue_style( 'cpdfv-admin-css', plugins_url( 'pdf-viewer-admin.css', __FILE__ ), array(), '2.1.19' );
+    wp_enqueue_style( 'cpdfv-admin-css', plugins_url( 'pdf-viewer-admin.css', __FILE__ ), array(), '2.1.20' );
     wp_enqueue_style( 'wp-color-picker' );
     wp_enqueue_script( 'wp-color-picker' );
     wp_enqueue_media();
-    wp_enqueue_script( 'cpdfv-admin-js', plugins_url( 'pdf-viewer-admin.js', __FILE__ ), array( 'jquery', 'wp-color-picker' ), '2.1.19', true );
+    wp_enqueue_script( 'cpdfv-admin-js', plugins_url( 'pdf-viewer-admin.js', __FILE__ ), array( 'jquery', 'wp-color-picker' ), '2.1.20', true );
+    wp_localize_script( 'cpdfv-admin-js', 'cpdfvAdminI18n', array(
+        'selectPdf'      => esc_html__( 'Select PDF File', 'continuous-pdf-viewer' ),
+        'selectCover'    => esc_html__( 'Select Cover Image', 'continuous-pdf-viewer' ),
+        'copied'         => esc_html__( 'Copied!', 'continuous-pdf-viewer' ),
+        'copyBtn'        => esc_html__( 'Copy Shortcode', 'continuous-pdf-viewer' ),
+        'pasteFirst'     => esc_html__( 'Paste a shortcode first.', 'continuous-pdf-viewer' ),
+        'invalidFormat'  => esc_html__( 'That does not look like a valid shortcode.', 'continuous-pdf-viewer' ),
+        'attrSetSingle'  => esc_html__( '1 attribute set', 'continuous-pdf-viewer' ),
+        'attrSetPlural'  => esc_html__( '%d attributes set', 'continuous-pdf-viewer' ),
+        'importSingle'   => esc_html__( 'Imported 1 attribute.', 'continuous-pdf-viewer' ),
+        'importPlural'   => esc_html__( 'Imported %d attributes.', 'continuous-pdf-viewer' ),
+        'shortcodeTag'   => 'continuous_pdf_viewer' // Matches the PHP registration
+    ) );
 }
 
 /**
@@ -402,6 +473,10 @@ function cpdfv_add_settings_page() {
 
 // 10. Render the Settings Page UI
 function cpdfv_settings_page_html() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'continuous-pdf-viewer' ) );
+    }
+
     // The default tip if the option hasn't been saved yet
     $default_tip = 'Pro-Tip: Click <a href="#" class="cpdfv-tip-link">Full Screen</a> for the best viewing experience.';
     $current_tip = get_option('cpdfv_global_pro_tip', $default_tip);
