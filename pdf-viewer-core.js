@@ -1160,8 +1160,18 @@ function boot() {
 }
 
 // 3. Module Execution
+function initViewerObserver() {
+    boot(); // Run for standard page loads
+
+    // Run for dynamically loaded content (Frontend AJAX, tabs, etc.)
+    var observer = new MutationObserver(function() {
+        setTimeout(boot, 50);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot);
+    document.addEventListener('DOMContentLoaded', initViewerObserver);
 } else {
-    boot();
+    initViewerObserver();
 }

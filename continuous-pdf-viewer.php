@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name: Continuous PDF Viewer
- * Plugin URI:  https://mafw.org
+ * Plugin URI:  https://github.com/jeiseman/continuous-pdf-viewer
  * Description: A high-performance PDF viewer based on PDF.js with a shortcode generator and Gutenberg support.
- * Version:     2.1.20
+ * Version:     2.1.21
  * Author:      Jonathan A Eiseman
  * License:     GPL2
  * Text Domain: continuous-pdf-viewer
@@ -105,7 +105,7 @@ function cpdfv_render_shortcode( $atts ) {
     $f_status_bar     = filter_var( $a['f_status_bar'], FILTER_VALIDATE_BOOLEAN );
     $sidebar_open     = filter_var( $a['sidebar_open'], FILTER_VALIDATE_BOOLEAN );
 
-    $uid = 'cpdfv-' . wp_generate_password( 8, false );
+    $uid = 'cpdfv-' . uniqid();
     
     // Visibility classes: if a feature is false, we add a 'cpdfv-hidden' class[cite: 1]
     $v_thumbnails      = $f_thumbnails ? '' : ' cpdfv-hidden';
@@ -417,11 +417,11 @@ function cpdfv_admin_menu() {
 add_action( 'admin_enqueue_scripts', 'cpdfv_admin_assets' );
 function cpdfv_admin_assets( $hook ) {
     if ( $hook !== 'tools_page_cpdfv-generator' ) return;
-    wp_enqueue_style( 'cpdfv-admin-css', plugins_url( 'pdf-viewer-admin.css', __FILE__ ), array(), '2.1.20' );
+    wp_enqueue_style( 'cpdfv-admin-css', plugins_url( 'pdf-viewer-admin.css', __FILE__ ), array(), '2.1.21' );
     wp_enqueue_style( 'wp-color-picker' );
     wp_enqueue_script( 'wp-color-picker' );
     wp_enqueue_media();
-    wp_enqueue_script( 'cpdfv-admin-js', plugins_url( 'pdf-viewer-admin.js', __FILE__ ), array( 'jquery', 'wp-color-picker' ), '2.1.20', true );
+    wp_enqueue_script( 'cpdfv-admin-js', plugins_url( 'pdf-viewer-admin.js', __FILE__ ), array( 'jquery', 'wp-color-picker' ), '2.1.21', true );
     wp_localize_script( 'cpdfv-admin-js', 'cpdfvAdminI18n', array(
         'selectPdf'      => esc_html__( 'Select PDF File', 'continuous-pdf-viewer' ),
         'selectCover'    => esc_html__( 'Select Cover Image', 'continuous-pdf-viewer' ),
